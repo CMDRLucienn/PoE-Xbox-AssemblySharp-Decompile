@@ -59,6 +59,12 @@ public static class WindowsPathHelper
 		void Redirect_Stub();
 	}
 
+	[ComImport]
+	[Guid("4df0c730-df9d-4ae3-9153-aa6b82e9795a")]
+	internal class KnownFolderManagerImpl
+	{
+	}
+
 	private const int MAX_PATH = 260;
 
 	private const int CSIDL_PERSONAL = 5;
@@ -121,7 +127,7 @@ public static class WindowsPathHelper
 
 	public static string GetKnownFolder(Guid knownFolderId)
 	{
-		(((new COMException("Could not create instance of known folder manager coclass")) as IKnownFolderManager) ?? throw new COMException("Could not query known folder manager interface")).GetFolder(ref knownFolderId, out var knownFolder);
+		(((new KnownFolderManagerImpl() ?? throw new COMException("Could not create instance of known folder manager coclass")) as IKnownFolderManager) ?? throw new COMException("Could not query known folder manager interface")).GetFolder(ref knownFolderId, out var knownFolder);
 		if (knownFolder == null)
 		{
 			throw new COMException("Could not query known folder");
