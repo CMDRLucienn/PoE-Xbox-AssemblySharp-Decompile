@@ -39,47 +39,27 @@ public class UIInstalledPackageHighlight : MonoBehaviour
 
 	private void Start()
 	{
-		GameUtilities.ContentUpdated = (GameUtilities.ContentUpdatedDelegate)Delegate.Combine(GameUtilities.ContentUpdated, new GameUtilities.ContentUpdatedDelegate(UpdateState));
 		HoverLabel.enabled = false;
-		UpdateState();
-		UIEventListener uIEventListener = UIEventListener.Get(Button.gameObject);
-		uIEventListener.onHover = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onHover, new UIEventListener.BoolDelegate(OnHover));
-		UIEventListener uIEventListener2 = UIEventListener.Get(Button.gameObject);
-		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(OnClick));
-	}
-
-	private void OnDestroy()
-	{
-		GameUtilities.ContentUpdated = (GameUtilities.ContentUpdatedDelegate)Delegate.Remove(GameUtilities.ContentUpdated, new GameUtilities.ContentUpdatedDelegate(UpdateState));
-	}
-
-	private void UpdateState()
-	{
 		if (RequiredPackageInstalled())
+		{
+			Button.enabled = true;
+			if (!HasNeededDependency())
+			{
+			}
+		}
+		else
 		{
 			Button.enabled = true;
 			UISprite component = Button.GetComponent<UISprite>();
 			if ((bool)component)
 			{
-				if (component.spriteName.EndsWith("_g"))
-				{
-					component.spriteName = component.spriteName.Remove(component.spriteName.Length - 2);
-				}
-				Button.ChangeNormalSprite(component.spriteName);
+				Button.ChangeNormalSprite(component.spriteName += "_g");
 			}
-			HasNeededDependency();
-			return;
 		}
-		Button.enabled = true;
-		UISprite component2 = Button.GetComponent<UISprite>();
-		if ((bool)component2)
-		{
-			if (!component2.spriteName.EndsWith("_g"))
-			{
-				component2.spriteName += "_g";
-			}
-			Button.ChangeNormalSprite(component2.spriteName);
-		}
+		UIEventListener uIEventListener = UIEventListener.Get(Button.gameObject);
+		uIEventListener.onHover = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onHover, new UIEventListener.BoolDelegate(OnHover));
+		UIEventListener uIEventListener2 = UIEventListener.Get(Button.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(OnClick));
 	}
 
 	private void OnHover(GameObject sender, bool over)

@@ -8,8 +8,6 @@ using UnityEngine.AI;
 
 public class GameUtilities : MonoBehaviour
 {
-	public delegate void ContentUpdatedDelegate();
-
 	public struct CapeColliderData
 	{
 		public float radius;
@@ -68,8 +66,6 @@ public class GameUtilities : MonoBehaviour
 	private static AssetBundle m_expansion2SceneAssetBundle = null;
 
 	private static AssetBundle m_streamedSceneAssetBundle = null;
-
-	public static ContentUpdatedDelegate ContentUpdated;
 
 	public static bool ShowResolutionDebug = false;
 
@@ -953,28 +949,17 @@ public class GameUtilities : MonoBehaviour
 	public static void CheckForExpansions()
 	{
 		ProductConfiguration.ActivePackage = ProductConfiguration.Package.BaseGame;
-		if (GamePassManager.Initialized)
+		if (File.Exists(Path.Combine(Application.dataPath, GameResources.PX1Path)))
 		{
-			if (GamePassManager.Instance.IsPackageAvailable("9P6ZDQKL5D39"))
-			{
-				ProductConfiguration.ActivePackage |= ProductConfiguration.Package.Expansion1;
-			}
-			if (GamePassManager.Instance.IsPackageAvailable("9NP9GGCSH210"))
-			{
-				ProductConfiguration.ActivePackage |= ProductConfiguration.Package.Expansion2;
-			}
-			if (GamePassManager.Instance.IsPackageAvailable("9MX7735D2RQC"))
-			{
-				ProductConfiguration.ActivePackage |= ProductConfiguration.Package.Expansion4;
-			}
-			if (GamePassManager.Instance.IsPackageAvailable("9PLPWDTHM4RB"))
-			{
-				ProductConfiguration.ActivePackage |= ProductConfiguration.Package.RoyalEdition;
-			}
+			ProductConfiguration.ActivePackage |= ProductConfiguration.Package.Expansion1;
 		}
-		if (ContentUpdated != null)
+		if (File.Exists(Path.Combine(Application.dataPath, GameResources.PX2Path)))
 		{
-			ContentUpdated();
+			ProductConfiguration.ActivePackage |= ProductConfiguration.Package.Expansion2;
+		}
+		if (File.Exists(Path.Combine(Application.dataPath, GameResources.PX4Path)))
+		{
+			ProductConfiguration.ActivePackage |= ProductConfiguration.Package.Expansion4;
 		}
 	}
 
@@ -999,11 +984,6 @@ public class GameUtilities : MonoBehaviour
 	public static bool HasPX4()
 	{
 		return HasPackage(ProductConfiguration.Package.Expansion4);
-	}
-
-	public static bool HasRoyalEdition()
-	{
-		return HasPackage(ProductConfiguration.Package.RoyalEdition);
 	}
 
 	public static bool HasPackage(ProductConfiguration.Package package)

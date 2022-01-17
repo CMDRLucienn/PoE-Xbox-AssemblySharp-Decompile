@@ -46,12 +46,10 @@ public class RoyalEditionButton : MonoBehaviour
 		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(OnClose));
 		UIEventListener uIEventListener4 = UIEventListener.Get(continueBtn);
 		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, new UIEventListener.VoidDelegate(InitialiseCopy));
-		XboxOneNativeWrapper.ContentCopied = (XboxOneNativeWrapper.ContentCopiedDelegate)Delegate.Combine(XboxOneNativeWrapper.ContentCopied, new XboxOneNativeWrapper.ContentCopiedDelegate(CopyComplete));
 	}
 
 	private void OnDestroy()
 	{
-		XboxOneNativeWrapper.ContentCopied = (XboxOneNativeWrapper.ContentCopiedDelegate)Delegate.Remove(XboxOneNativeWrapper.ContentCopied, new XboxOneNativeWrapper.ContentCopiedDelegate(CopyComplete));
 	}
 
 	private void SetPromptPanel(bool isVisable)
@@ -87,22 +85,7 @@ public class RoyalEditionButton : MonoBehaviour
 	{
 		if (isPanelButtonsActive)
 		{
-			try
-			{
-				Cursor.lockState = CursorLockMode.Locked;
-				GameCursor.LockCursor = true;
-				Debug.Log("Copying");
-				SetCopyPanel(isVisable: true);
-				string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-				folderPath.Replace('\\', '/');
-				folderPath += "/Paradox Interactive/Pillars of Eternity";
-				gamePass.CopyDLCPackageContent("9PLPWDTHM4RB", folderPath);
-			}
-			catch (Exception ex)
-			{
-				Debug.LogError(ex.Message);
-				CopyComplete(result: false);
-			}
+			CopyComplete(result: false);
 		}
 	}
 
@@ -142,7 +125,6 @@ public class RoyalEditionButton : MonoBehaviour
 			if (over)
 			{
 				promptBttnHoverLabel.enabled = true;
-				promptBttnHoverLabel.text = ((GameUtilities.HasRoyalEdition() || isRoyalEditionProgressComplete) ? InstalledString.GetText() : UninstalledString.GetText());
 			}
 			else
 			{
@@ -153,14 +135,5 @@ public class RoyalEditionButton : MonoBehaviour
 
 	private void OnClick(GameObject source)
 	{
-		GameUtilities.CheckForExpansions();
-		if (GameUtilities.HasRoyalEdition() || isRoyalEditionProgressComplete)
-		{
-			SetPromptPanel(isVisable: true);
-		}
-		else
-		{
-			Application.OpenURL(NotInstalledClickURL);
-		}
 	}
 }

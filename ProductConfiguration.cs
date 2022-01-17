@@ -9,8 +9,7 @@ public static class ProductConfiguration
 		BackerBeta = 2,
 		Expansion1 = 4,
 		Expansion2 = 8,
-		Expansion4 = 0x10,
-		RoyalEdition = 0x20
+		Expansion4 = 0x10
 	}
 
 	public static readonly int MajorVersion = 1;

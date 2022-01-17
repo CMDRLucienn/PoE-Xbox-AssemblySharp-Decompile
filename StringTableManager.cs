@@ -120,7 +120,7 @@ public static class StringTableManager
 			sortedDictionary.Clear();
 			for (int i = 0; i < array.Length; i++)
 			{
-				if (array[i] != ProductConfiguration.Package.BackerBeta && array[i] != ProductConfiguration.Package.RoyalEdition)
+				if (array[i] != ProductConfiguration.Package.BackerBeta)
 				{
 					string text = ProductConfiguration.PackageDataFolders[i] + "/localized/" + CurrentLanguage.Folder + "/" + key;
 					text = Application.dataPath + Path.DirectorySeparatorChar + text.ToLower();
@@ -146,7 +146,7 @@ public static class StringTableManager
 		ProductConfiguration.Package[] array = (ProductConfiguration.Package[])Enum.GetValues(typeof(ProductConfiguration.Package));
 		for (int i = 0; i < array.Length; i++)
 		{
-			if (array[i] != ProductConfiguration.Package.BackerBeta && array[i] != ProductConfiguration.Package.RoyalEdition)
+			if (array[i] != ProductConfiguration.Package.BackerBeta)
 			{
 				string filename = ProductConfiguration.PackageDataFolders[i] + "/localized/" + CurrentLanguage.Folder + "/" + relativePath;
 				filename = GameResources.GetOverridePath(Path.GetDirectoryName("/localized/" + CurrentLanguage.Folder + "/" + relativePath), filename);

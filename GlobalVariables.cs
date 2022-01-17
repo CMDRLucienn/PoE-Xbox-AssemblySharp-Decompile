@@ -43,7 +43,7 @@ public class GlobalVariables : MonoBehaviour
 		ProductConfiguration.Package[] array = (ProductConfiguration.Package[])Enum.GetValues(typeof(ProductConfiguration.Package));
 		for (int i = 0; i < array.Length; i++)
 		{
-			if (array[i] == ProductConfiguration.Package.BackerBeta || array[i] == ProductConfiguration.Package.RoyalEdition)
+			if (array[i] == ProductConfiguration.Package.BackerBeta)
 			{
 				continue;
 			}

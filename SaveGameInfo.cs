@@ -427,7 +427,6 @@ public class SaveGameInfo
 		saveGameInfo.Difficulty = GameState.Instance.Difficulty;
 		saveGameInfo.ActivePackages = ProductConfiguration.ActivePackage;
 		saveGameInfo.ActivePackages &= ~ProductConfiguration.Package.Expansion4;
-		saveGameInfo.ActivePackages &= ~ProductConfiguration.Package.RoyalEdition;
 		SerializeSaveGameInfo(saveGameInfo, path);
 		string text2 = Path.Combine(Application.temporaryCachePath, "screenshot.png");
 		string text3 = Path.Combine(path, "screenshot.png");

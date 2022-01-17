@@ -23,8 +23,6 @@ public class XboxOneNativeWrapper : MonoBehaviour
 		}
 	}
 
-	public delegate void ContentCopiedDelegate(bool Success);
-
 	public readonly Queue<Action> ExecuteOnMainThread = new Queue<Action>();
 
 	private static IAchievementHandler m_AchievementHandler = new XboxOneAchievementManager();
@@ -47,20 +45,9 @@ public class XboxOneNativeWrapper : MonoBehaviour
 
 	private bool SignOutDetected;
 
-	public static ContentCopiedDelegate ContentCopied;
-
-	public XPackageInstallationMonitorHandle royalEditionInstallationMonitor;
-
-	public static XPackageInstalledCallback royalEditionInstallCallback;
-
 	private bool fullScreenOriginalSetting;
 
 	public static XboxOneNativeWrapper Instance { get; private set; }
-
-	public void InstallationChange(XPackageDetails details)
-	{
-		RoyalEditionButton.isRoyalEditionProgressComplete = true;
-	}
 
 	private void Refresh()
 	{
@@ -99,16 +86,12 @@ public class XboxOneNativeWrapper : MonoBehaviour
 
 	public void Start()
 	{
-		royalEditionInstallCallback = (XPackageInstalledCallback)Delegate.Combine(royalEditionInstallCallback, new XPackageInstalledCallback(InstallationChange));
 		Initialize();
-		SDK.XPackageRegisterPackageInstalled(royalEditionInstallCallback, out registerInstallationToken);
-		royalEditionInstallCallback = (XPackageInstalledCallback)Delegate.Combine(royalEditionInstallCallback, new XPackageInstalledCallback(InstallationChange));
 	}
 
 	public void OnDestroy()
 	{
 		SDK.XUserUnregisterForChangeEvent(m_SignInRegistrationToken);
-		royalEditionInstallCallback = (XPackageInstalledCallback)Delegate.Remove(royalEditionInstallCallback, new XPackageInstalledCallback(InstallationChange));
 		SDK.XPackageUnregisterPackageInstalled(registerInstallationToken);
 		SDK.XGameRuntimeUninitialize();
 		if (Instance == this)
@@ -234,79 +217,6 @@ public class XboxOneNativeWrapper : MonoBehaviour
 	{
 		Debug.Log("---------GAMEPASS: XboxOneNativeWrapper.SetPresence : presenceId = " + presenceId + " --- tokenIds = " + tokenIds);
 		m_PresenceManager.SetPresence(presenceId, tokenIds);
-	}
-
-	public void CopyDLCPackageContent(string PackageStoreId, string TargetPath)
-	{
-		StartCoroutine(CopyDLCPackageContentCoroutine(PackageStoreId, TargetPath));
-	}
-
-	public IEnumerator CopyDLCPackageContentCoroutine(string PackageStoreId, string TargetPath)
-	{
-		bool Result = false;
-		try
-		{
-			if (GamePassManager.Instance.IsPackageAvailable(PackageStoreId))
-			{
-				string packageIdentifierFromStoreId = GamePassManager.Instance.GetPackageIdentifierFromStoreId(PackageStoreId);
-				if (packageIdentifierFromStoreId != "")
-				{
-					int num = SDK.XPackageMount(packageIdentifierFromStoreId, out var PackageHandle);
-					if (num >= 0)
-					{
-						string MountPath = "";
-						num = SDK.XPackageGetMountPath(PackageHandle, out MountPath);
-						if (num >= 0)
-						{
-							DirectoryInfo[] directories = new DirectoryInfo(MountPath).GetDirectories();
-							DirectoryInfo[] array = directories;
-							foreach (DirectoryInfo directoryInfo in array)
-							{
-								string sourceDirName = MountPath + "/" + directoryInfo.Name;
-								string destDirName = TargetPath + "/" + directoryInfo.Name;
-								yield return StartCoroutine(DirectoryCopy(sourceDirName, destDirName));
-							}
-							SDK.XPackageCloseMountHandle(PackageHandle);
-							Result = true;
-						}
-						else
-						{
-							Debug.LogError("---------GAMEPASS: XboxOneNativeWrapper.CopyDLCPackageContentCoroutine : Couldn't retrieve mount path hr: " + num.ToString("X8"));
-							SDK.XPackageCloseMountHandle(PackageHandle);
-							Result = false;
-						}
-					}
-					else
-					{
-						Debug.LogError("---------GAMEPASS: XboxOneNativeWrapper.CopyDLCPackageContentCoroutine : Couldn't mount package hr: " + num.ToString("X8"));
-						SDK.XPackageCloseMountHandle(PackageHandle);
-						Result = false;
-					}
-				}
-				else
-				{
-					Debug.LogError("---------GAMEPASS: XboxOneNativeWrapper.CopyDLCPackageContentCoroutine : Couldn't find package identifier");
-					Result = false;
-				}
-			}
-			else
-			{
-				Debug.LogError("---------GAMEPASS: XboxOneNativeWrapper.CopyDLCPackageContentCoroutine : The requested package isn't available");
-				Result = false;
-			}
-		}
-		finally
-		{
-			if (ContentCopied != null)
-			{
-				ContentCopied(Result);
-			}
-			else
-			{
-				Cursor.lockState = CursorLockMode.None;
-				GameCursor.LockCursor = false;
-			}
-		}
 	}
 
 	private IEnumerator DirectoryCopy(string sourceDirName, string destDirName)
