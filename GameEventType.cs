@@ -1,0 +1,24 @@
+public enum GameEventType
+{
+	None,
+	Damaged,
+	Healed,
+	HitReact,
+	UsableClicked,
+	PlayerCommand,
+	Ability,
+	KnockedDown,
+	Unconscious,
+	Dead,
+	Revived,
+	MeleeEngaged,
+	RequestHelp,
+	Stunned,
+	Confused,
+	Killed,
+	Destroyed,
+	MeleeEngageBroken,
+	MeleeEngagementForceBreak,
+	Gibbed,
+	Paralyzed
+}
