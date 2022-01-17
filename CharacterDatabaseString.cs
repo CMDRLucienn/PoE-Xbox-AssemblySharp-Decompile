@@ -19,11 +19,10 @@ public class CharacterDatabaseString : DatabaseString
 
 	public override bool IsStringTableMutable => false;
 
-	public CharacterDatabaseString()
+	public CharacterDatabaseString() : base(StringTableType.Characters)
 	{
 		Guid empty = Guid.Empty;
 		CharacterGuid = empty.ToString();
-		base._002Ector(StringTableType.Characters);
 	}
 
 	public override StringTableType GetStringTable()

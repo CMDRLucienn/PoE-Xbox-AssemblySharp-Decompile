@@ -781,7 +781,7 @@ public class StatusEffectParams : ISerializationCallbackReceiver
 				}
 				else
 				{
-					GetEffectValuesForUi(statusEffect, statusEffectParams, source, ability, affliction, mode, out o_appliedDuration, out o_adjustedDuration, out var o_appliedValue, out o_appliedValue);
+					GetEffectValuesForUi(statusEffect, statusEffectParams, source, ability, affliction, mode, out o_appliedDuration, out o_adjustedDuration, out float o_appliedValue, out o_appliedValue);
 				}
 				if (statusEffect == null || (!statusEffect.IsSuppressed && !statusEffect.IsSuspended))
 				{
