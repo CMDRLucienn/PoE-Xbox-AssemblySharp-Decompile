@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <AssemblyName>Assembly-CSharp</AssemblyName>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
@@ -85,6 +85,6 @@
     </Reference>
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /Y &quot;" />
+    <Exec Command="copy /Y &quot;E:\EDWorkspace\PoERE\Xbox-Decompile\bin\Debug\net45\Assembly-CSharp.dll&quot; &quot;F:\Staging\Pillars of Eternity\Content\PillarsOfEternity_Data\Managed\Assembly-CSharp.dll&quot;&#xD;&#xA;cd /d &quot;F:\Staging\Pillars of Eternity\Content&quot;&#xD;&#xA;PillarsOfEternity.exe" />
   </Target>
 </Project>
