@@ -192,7 +192,7 @@ public class UIDropdownMenu : MonoBehaviour
 		}
 	}
 
-	private void RefreshDropdown()
+	public void RefreshDropdown()
 	{
 		if (m_DropdownOpen && Options != null && Options.Length != 0)
 		{
@@ -233,7 +233,7 @@ public class UIDropdownMenu : MonoBehaviour
 		}
 	}
 
-	private void RefreshSelected()
+	public void RefreshSelected()
 	{
 		if (SelectedItem == null)
 		{

@@ -89,7 +89,7 @@ public class UIOptionsTag : MonoBehaviour
 		UpdateLabel();
 	}
 
-	private void UpdateLabel()
+	public void UpdateLabel()
 	{
 		if (Label != null)
 		{
