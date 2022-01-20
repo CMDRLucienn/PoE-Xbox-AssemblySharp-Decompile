@@ -67,7 +67,7 @@ public class PartyMemberAI : AIController
 
 	public static bool DebugParty = false;
 
-	public static readonly int MaxAdventurers = 8;
+	public static int MaxAdventurers = 8;
 
 	public const int MAX_PRIMARY_PARTY_MEMBERS = 6;
 
@@ -2704,6 +2704,29 @@ public class PartyMemberAI : AIController
 		if (component != null)
 		{
 			attackState.TargetTeam = component.CurrentTeamInstance;
+		}
+	}
+
+	public static void newUpdateMaxAdventurers()
+	{
+		switch (IEModOptions.MaxAdventurersCount)
+		{
+			case IEModOptions.MaxAdventurersOptions.Double_16:
+				MaxAdventurers = 16;
+				break;
+			case IEModOptions.MaxAdventurersOptions.Triple_24:
+				MaxAdventurers = 24;
+				break;
+			case IEModOptions.MaxAdventurersOptions.Quadra_32:
+				MaxAdventurers = 32;
+				break;
+			case IEModOptions.MaxAdventurersOptions.OneHundredTwentyEight:
+				MaxAdventurers = 128;
+				break;
+			case IEModOptions.MaxAdventurersOptions.Normal_8:
+			default:
+				MaxAdventurers = 8;
+				break;
 		}
 	}
 }
