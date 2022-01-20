@@ -9,8 +9,10 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup />
-  <ItemGroup />
   <ItemGroup>
+    <Reference Include="Patchwork.Attributes">
+      <HintPath>..\IEMod.pw\Patchwork\PatchworkLauncher\bin\Debug\Patchwork.Attributes.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\Xbox-DLLs\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
