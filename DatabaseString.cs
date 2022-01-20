@@ -6,6 +6,12 @@ public class DatabaseString
 {
 	public enum StringTableType
 	{
+		/// <summary>
+		/// We add an extra member to the enum for IEMod strings.
+		/// That way they won't conflict with other GUI strings, and also lets us circumvent the standard string table system
+		/// which is a massive pain in the underside.
+		/// </summary>
+		IEModGUI = -2135132,
 		Unassigned = 0,
 		Gui = 1,
 		Characters = 4,

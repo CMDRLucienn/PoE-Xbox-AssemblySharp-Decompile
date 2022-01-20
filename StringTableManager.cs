@@ -29,9 +29,9 @@ public static class StringTableManager
 
 	public static List<Language> Languages;
 
-	private static Dictionary<string, SortedDictionary<uint, StringTable>> StringTables;
+	public static Dictionary<string, SortedDictionary<uint, StringTable>> StringTables;
 
-	private static Dictionary<DatabaseString.StringTableType, string> StringTableLookup;
+	public static Dictionary<DatabaseString.StringTableType, string> StringTableLookup;
 
 	public static Gender PlayerGender;
 
@@ -174,7 +174,7 @@ public static class StringTableManager
 		return GetText(stringTable, stringID, PlayerGender);
 	}
 
-	public static string GetText(DatabaseString.StringTableType stringTable, int stringID, Gender gender)
+	public static string GetTextOrig(DatabaseString.StringTableType stringTable, int stringID, Gender gender)
 	{
 		if (!Initialized)
 		{
@@ -189,6 +189,15 @@ public static class StringTableManager
 			Debug.Log($"Could not find string for Table {stringTable.ToString()} ID {stringID}");
 		}
 		return "*Missing " + stringTable.ToString() + " " + stringID + "*";
+	}
+
+	public static string GetText(DatabaseString.StringTableType stringTable, int stringID, Gender gender)
+	{
+		if (stringTable == DatabaseString.StringTableType.IEModGUI)
+		{
+			return IEModString.GetString(stringID);
+		}
+		return GetTextOrig(stringTable, stringID, gender);
 	}
 
 	public static string GetText(string stringTableFilename, int stringID)
