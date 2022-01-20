@@ -259,6 +259,35 @@ public class GameMode
 
 	public event Action<GameMode> OptionsReloaded;
 
+	private void CtorOrig()
+	{
+		BoolOptions = new bool[35];
+		MasterVolume = 1f;
+		MusicVolume = 0.3f;
+		SoundVolume = 1f;
+		VoiceVolume = 1f;
+		TooltipDelay = 0.5f;
+		LanguageName = "";
+		ScrollSpeed = 1f;
+		Gamma = 1f;
+		AreaLootRange = 4f;
+		VoiceFrequency = 1f;
+		m_FontScale = 1f;
+		MinZoom = 0.75f;
+		MaxZoom = 1.5f;
+		Quality = 1;
+		MaxAutosaves = 3;
+		FrameRateMax = -1;
+		OcclusionOpacity = 0.3f;
+		m_autopause = new AutoPauseOptions();
+	}
+
+	public GameMode()
+    {
+		CtorOrig();
+		IEModOptions.LoadFromPrefs();
+    }
+
 	public bool GetOption(GameOption.BoolOption option)
 	{
 		if (Expert && GameOption.IsBoolOptionExpert(option))
@@ -360,6 +389,11 @@ public class GameMode
 	}
 
 	public bool Matches(GameMode other)
+    {
+		return MatchesOrig(other) && IEModOptions.IsIdenticalToPrefs();
+	}
+
+	public bool MatchesOrig(GameMode other)
 	{
 		if (BoolOptions.Length != other.BoolOptions.Length)
 		{
@@ -392,7 +426,7 @@ public class GameMode
 		}
 	}
 
-	public void LoadFromPrefs()
+	public void LoadFromPrefsOrig()
 	{
 		for (int i = 0; i < 35; i++)
 		{
@@ -444,7 +478,13 @@ public class GameMode
 		}
 	}
 
-	public void SaveToPrefs()
+	public void LoadFromPrefs()
+    {
+		LoadFromPrefsOrig();
+		IEModOptions.LoadFromPrefs();
+	}
+
+	public void SaveToPrefsOrig()
 	{
 		for (int i = 0; i < 35; i++)
 		{
@@ -471,5 +511,11 @@ public class GameMode
 		PlayerPrefs.SetInt("PreferredMainMenuBackground", (int)PreferredMainMenuBackground);
 		AutoPause.SaveOptions();
 		PlayerPrefs.Save();
+	}
+
+	public void SaveToPrefs()
+    {
+		SaveToPrefsOrig();
+		IEModOptions.SaveToPrefs();
 	}
 }

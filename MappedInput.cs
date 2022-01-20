@@ -7,13 +7,13 @@ public static class MappedInput
 {
 	public static GUIDatabaseString[] CategoryNames;
 
-	private static GUIDatabaseString[] m_ControlNames;
+	public static GUIDatabaseString[] m_ControlNames;
 
 	public static bool[] MouseForbidden;
 
 	public static MappedControl[][] CategorizedControls;
 
-	private static MappedControl[] ReadOnlyControls;
+	public static MappedControl[] ReadOnlyControls;
 
 	public static MappedControl[][] OverlapAllowed;
 
