@@ -1,14 +1,19 @@
-﻿// IEMod.QuickControls.BindingMode
-using System;
-using Patchwork.Attributes;
-
-[NewType(null, null)]
-[Flags]
-[PatchedByType("IEMod.QuickControls.BindingMode")]
-public enum BindingMode
+﻿public enum BindingMode
 {
-	Disabled = 0,
-	FromSource = 1,
-	ToSource = 2,
-	TwoWay = 3
+	/// <summary>
+	/// The binding is inactive. Changes do not propogate.
+	/// </summary>
+	Disabled = 0x0,
+	/// <summary>
+	/// Changes propogate to the binding target (usually the owner of the Bindable) from the source.
+	/// </summary>
+	FromSource = 0x1,
+	/// <summary>
+	/// Changes propogate to the binding source from the target (usually the owner of the Bindable).
+	/// </summary>
+	ToSource = 0x2,
+	/// <summary>
+	/// Changes propogate in both directions.
+	/// </summary>
+	TwoWay = FromSource | ToSource
 }

@@ -7,14 +7,15 @@ using UnityEngine;
 [PatchedByType("IEMod.QuickControls.Behaviors.BlockClicking")]
 public static class BlockClicking
 {
-	[PatchedByMember("System.Void IEMod.QuickControls.Behaviors.BlockClicking::Apply(IEMod.QuickControls.QuickDropdown`1<T>)")]
 	public static void Apply<T>(QuickDropdown<T> button)
 	{
-		GameObject gameObject = button.GameObject;
-		gameObject.Descendant("Background").AddComponent<UINoClick>().BlockClicking = true;
-		gameObject.Descendant("BackgroundDropdown").AddComponent<UINoClick>().BlockClicking = true;
-		gameObject.ComponentsInDescendants<UILabel>().ToList().ForEach(delegate (UILabel x)
-		{
+		var FrameDropdown = button.GameObject;
+		FrameDropdown.Descendant("Background").AddComponent<UINoClick>().BlockClicking = true;
+		//this max the BG between the dropdown options block clicks
+		FrameDropdown.Descendant("BackgroundDropdown").AddComponent<UINoClick>().BlockClicking = true;
+
+		//this makes the options themselves block clicks. There *has* to be a better way to do this. I just don't know what it is.
+		FrameDropdown.ComponentsInDescendants<UILabel>().ToList().ForEach(x => {
 			if (!x.gameObject.HasComponent<BoxCollider>())
 			{
 				x.gameObject.AddComponent<BoxCollider>().size = Vector3.one;

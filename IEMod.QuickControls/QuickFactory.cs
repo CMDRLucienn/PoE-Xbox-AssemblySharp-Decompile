@@ -6,8 +6,6 @@ using UnityEngine;
 
 public class QuickFactory
 {
-	public Transform CurrentParent { get; set; }
-
 	public QuickFactory(Transform currentParent)
 	{
 		CurrentParent = currentParent;
@@ -16,6 +14,8 @@ public class QuickFactory
 	public QuickFactory()
 	{
 	}
+
+	public Transform CurrentParent { get; set; }
 
 	public QuickCheckbox Checkbox(Expression<Func<bool>> memberAccessExpr, string name = null)
 	{
@@ -57,7 +57,8 @@ public class QuickFactory
 		};
 	}
 
-	public QuickDropdown<T> EnumDropdown<T>(Expression<Func<T>> memberAccessExpr, string name = null) where T : struct, IConvertible, IComparable, IFormattable
+	public QuickDropdown<T> EnumDropdown<T>(Expression<Func<T>> memberAccessExpr, string name = null)
+		where T : struct, IConvertible, IComparable, IFormattable
 	{
 		return Dropdown(memberAccessExpr, DropdownChoice.FromEnum<T>(), name);
 	}

@@ -1,15 +1,28 @@
-﻿// IEMod.QuickControls.DropdownChoice
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
-using Patchwork.Attributes;
 
-[NewType(null, null)]
-[PatchedByType("IEMod.QuickControls.DropdownChoice")]
+public class DropdownChoice<T>
+{
+	public readonly T Value;
+
+	public readonly string Label;
+
+	public DropdownChoice(string label, T value)
+	{
+		Label = label;
+		Value = value;
+	}
+
+	public override string ToString()
+	{
+		return Label;
+	}
+}
+
 public static class DropdownChoice
 {
-	[PatchedByMember("IEMod.QuickControls.DropdownChoice`1<T>[] IEMod.QuickControls.DropdownChoice::FromEnum()")]
 	public static DropdownChoice<T>[] FromEnum<T>()
 	{
 		List<DropdownChoice<T>> list = new List<DropdownChoice<T>>();
