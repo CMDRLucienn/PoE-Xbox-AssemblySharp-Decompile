@@ -542,6 +542,12 @@ public class Equipment : MonoBehaviour
 
 	public bool HasEquipmentSlot(Equippable.EquipmentSlot slot)
 	{
+		// Start of mod
+		if (IEModOptions.AllInventorySlots)
+		{
+			return true;
+		}
+		//End of mod, rest is normal code
 		CharacterStats component = GetComponent<CharacterStats>();
 		switch (slot)
 		{

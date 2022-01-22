@@ -224,11 +224,15 @@ public class RestZone : MonoBehaviour
 	public static void Camp()
 	{
 		PlayerInventory inventory = GameState.s_playerCharacter.Inventory;
-		if ((bool)inventory)
+
+		if (IEModOptions.MaxCampingSupplies != IEModOptions.MaxCampingSuppliesOptions.Disabled)
 		{
-			inventory.CampingSuppliesTotal--;
+			if (inventory)
+			{
+				inventory.CampingSuppliesTotal--;
+			}
+			Rest(Mode.Camp);
 		}
-		Rest(Mode.Camp);
 	}
 
 	public static CannotCampReason WhyCannotCamp()
@@ -242,10 +246,13 @@ public class RestZone : MonoBehaviour
 		{
 			cannotCampReason |= CannotCampReason.InCombat;
 		}
-		PlayerInventory inventory = GameState.s_playerCharacter.Inventory;
-		if (inventory == null || inventory.CampingSuppliesTotal == 0)
+		if (IEModOptions.MaxCampingSupplies != IEModOptions.MaxCampingSuppliesOptions.Disabled)
 		{
-			cannotCampReason |= CannotCampReason.NoSupplies;
+			PlayerInventory inventory = GameState.s_playerCharacter.Inventory;
+			if (inventory == null || inventory.CampingSuppliesTotal == 0)
+			{
+				cannotCampReason |= CannotCampReason.NoSupplies;
+			}
 		}
 		if (GameState.Instance.CurrentMap != null && !GameState.Instance.CurrentMap.GetCanCamp())
 		{

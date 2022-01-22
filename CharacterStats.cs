@@ -1693,9 +1693,35 @@ public class CharacterStats : MonoBehaviour
 
 	public int InventoryMaxSize => 16;
 
-	public int MaxWeaponSets => 2 + BonusWeaponSets;
+	public int MaxWeaponSets
+	{
+		get
+		{
+			if (IEModOptions.AllInventorySlots)
+			{
+				return 4;
+			}
+			else
+			{
+				return 2 + this.BonusWeaponSets;
+			}
+		}
+	}
 
-	public int MaxQuickSlots => 4 + BonusQuickSlots;
+	public int MaxQuickSlots
+	{
+		get
+		{
+			if (IEModOptions.AllInventorySlots)
+			{
+				return 6;
+			}
+			else
+			{
+				return 4 + this.BonusQuickSlots;
+			}
+		}
+	}
 
 	public float Focus
 	{

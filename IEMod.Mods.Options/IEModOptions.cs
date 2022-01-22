@@ -323,7 +323,7 @@ public static class IEModOptions
 		set
 		{
 			_maxAdventurersCount = value;
-			MaxAdventurers.mod_PartyMemberAI.newUpdateMaxAdventurers();
+			PartyMemberAI.UpdateMaxAdventurers();
 		}
 	}
 

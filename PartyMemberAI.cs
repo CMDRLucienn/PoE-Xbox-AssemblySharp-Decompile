@@ -2707,7 +2707,7 @@ public class PartyMemberAI : AIController
 		}
 	}
 
-	public static void newUpdateMaxAdventurers()
+	public static void UpdateMaxAdventurers()
 	{
 		switch (IEModOptions.MaxAdventurersCount)
 		{
