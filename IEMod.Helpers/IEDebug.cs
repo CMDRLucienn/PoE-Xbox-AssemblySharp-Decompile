@@ -1,58 +1,49 @@
-﻿// IEMod.Helpers.IEDebug
-using System;
+﻿using System;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Patchwork.Attributes;
 using UnityEngine;
 
-[PatchedByType("IEMod.Helpers.IEDebug")]
-[NewType(null, null)]
 public static class IEDebug
 {
 	private static readonly TextWriter _logger;
 
 	private static readonly Stream _innerStream;
-
-	[PatchedByMember("System.Void IEMod.Helpers.IEDebug::.cctor()")]
 	static IEDebug()
 	{
-		FileStream fileStream = (FileStream)(_innerStream = File.Open("IEMod.log", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite));
-		StreamWriter streamWriter = (StreamWriter)(_logger = new StreamWriter(_innerStream));
+		var fs = File.Open("IEMod.log", FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+		_innerStream = fs;
+		var writer = new StreamWriter(_innerStream);
+		_logger = writer;
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.IEDebug::Log(System.Object)")]
 	public static void Log(object format)
 	{
-		if (format != null && (!(format is string) || !string.IsNullOrEmpty((string)format)))
-		{
-			_logger.WriteLine(format);
-			_logger.Flush();
-			_innerStream.Flush();
-		}
+		if (format == null || (format is string && string.IsNullOrEmpty((string)format))) return;
+		_logger.WriteLine(format);
+		_logger.Flush();
+		_innerStream.Flush();
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.IEDebug::Log(System.String,System.Object[])")]
 	public static void Log(string format, params object[] args)
 	{
 		Log((object)string.Format(format, args));
 	}
 
-	[PatchedByMember("IEMod.Helpers.IEModException IEMod.Helpers.IEDebug::Exception(System.Exception,System.String,System.Object[])")]
+
 	public static IEModException Exception(Exception innerEx, string message, params object[] args)
 	{
 		Log("!! EXCEPTION !!: " + message, args);
-		args = args ?? new object[0];
-		IndentedTextWriter writer = new IndentedTextWriter(new StringWriter());
+		args = args ?? new object[] { };
+		var writer = new IndentedTextWriter(new StringWriter());
 		PrintStackTrace(writer, new StackTrace(1));
-		return new IEModException(string.Format(message, args), innerEx);
+		return new IEModException(String.Format(message, args), innerEx);
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.IEDebug::PrintStackTrace(System.CodeDom.Compiler.IndentedTextWriter,System.Diagnostics.StackTrace)")]
 	private static void PrintStackTrace(IndentedTextWriter writer, StackTrace trace)
 	{
-		StackFrame[] frames = trace.GetFrames();
+		var frames = trace.GetFrames();
 		if (frames == null)
 		{
 			writer.WriteLine("(none)");
@@ -60,16 +51,15 @@ public static class IEDebug
 		}
 		for (int i = 0; i < frames.Length; i++)
 		{
-			StackFrame stackFrame = frames[i];
-			writer.WriteLine("{0}. At {1}", i, stackFrame.GetMethod());
+			var frame = frames[i];
+			writer.WriteLine("{0}. At {1}", i, frame.GetMethod());
 			writer.Indent++;
-			writer.WriteLine("Source Location: {0}, ln# {1}, col# {2}", stackFrame.GetFileName(), stackFrame.GetFileLineNumber(), stackFrame.GetFileColumnNumber());
-			writer.WriteLine("IL Offset: {0}, Native Offset: {1}", stackFrame.GetILOffset(), stackFrame.GetNativeOffset());
+			writer.WriteLine("Source Location: {0}, ln# {1}, col# {2}", frame.GetFileName(), frame.GetFileLineNumber(), frame.GetFileColumnNumber());
+			writer.WriteLine("IL Offset: {0}, Native Offset: {1}", frame.GetILOffset(), frame.GetNativeOffset());
 			writer.Indent--;
 		}
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.IEDebug::PrintExceptionWithoutTrace(System.CodeDom.Compiler.IndentedTextWriter,System.Exception)")]
 	private static void PrintExceptionWithoutTrace(IndentedTextWriter iWriter, Exception ex)
 	{
 		if (ex == null)
@@ -87,7 +77,7 @@ public static class IEDebug
 		{
 			iWriter.WriteLine("Data:");
 			iWriter.Indent++;
-			foreach (object key in ex.Data.Keys)
+			foreach (var key in ex.Data.Keys)
 			{
 				iWriter.WriteLine("• {0} = {1}", key, ex.Data[key]);
 			}
@@ -99,18 +89,22 @@ public static class IEDebug
 		iWriter.Indent--;
 	}
 
-	[PatchedByMember("System.String IEMod.Helpers.IEDebug::PrintException(System.Exception)")]
 	public static string PrintException(Exception ex)
 	{
-		StringWriter stringWriter = new StringWriter();
-		IndentedTextWriter indentedTextWriter = new IndentedTextWriter(stringWriter);
-		PrintExceptionWithoutTrace(indentedTextWriter, ex);
-		indentedTextWriter.WriteLine("Unity Stack Trace:");
-		indentedTextWriter.Indent++;
-		string[] source = StackTraceUtility.ExtractStringFromException(ex).Split(new string[2] { "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-		source.ToList().ForEach(indentedTextWriter.WriteLine);
-		indentedTextWriter.Flush();
-		stringWriter.Flush();
-		return stringWriter.ToString();
+		var strWriter = new StringWriter();
+		var indentedWriter = new IndentedTextWriter(strWriter);
+		PrintExceptionWithoutTrace(indentedWriter, ex);
+		indentedWriter.WriteLine("Unity Stack Trace:");
+		indentedWriter.Indent++;
+		var traceLines = StackTraceUtility.ExtractStringFromException(ex).Split(new[] {
+				"\r",
+				"\n"
+			}, StringSplitOptions.RemoveEmptyEntries);
+		traceLines.ToList().ForEach(indentedWriter.WriteLine);
+		indentedWriter.Flush();
+		strWriter.Flush();
+		return strWriter.ToString();
 	}
+
+
 }

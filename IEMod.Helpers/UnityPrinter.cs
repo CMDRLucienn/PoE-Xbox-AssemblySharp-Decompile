@@ -1,66 +1,64 @@
-﻿// IEMod.Helpers.UnityPrinter
-using System;
+﻿using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Patchwork.Attributes;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
-[PatchedByType("IEMod.Helpers.UnityPrinter")]
-[NewType(null, null)]
 public class UnityPrinter
 {
-	[PatchedByType("IEMod.Helpers.UnityPrinter/RecursiveObjectPrinter")]
-	[NewType(null, null)]
 	private class RecursiveObjectPrinter
 	{
 		private readonly IndentedTextWriter _writer;
-
 		private readonly UnityPrinter _parent;
-
 		private readonly IDictionary<object, bool> _visited = new Dictionary<object, bool>();
 
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter/RecursiveObjectPrinter::.ctor(System.IO.TextWriter,IEMod.Helpers.UnityPrinter)")]
 		public RecursiveObjectPrinter(TextWriter writer, UnityPrinter parent)
 		{
 			_parent = parent;
 			_writer = new IndentedTextWriter(writer);
 		}
 
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter/RecursiveObjectPrinter::PrintValue(System.String,System.Func`1<System.Object>)")]
 		private void PrintValue(string key, Func<object> getter)
 		{
-			object obj;
+			object o;
 			try
 			{
-				obj = getter();
+				o = getter();
 			}
 			catch (Exception ex)
 			{
 				_writer.WriteLine("{0} = !! {1} !! //an exception occured while evaluating this", key, ex.GetType());
 				return;
 			}
-			if (obj == null)
+			if (o == null)
 			{
 				_writer.WriteLine("{0} = {1}", key, "(null)");
 				return;
 			}
-			string text = obj.ToString();
-			List<string> list = text.Split(new char[2] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-			if (list.Count <= 1)
+
+			var valueString = o.ToString();
+			var lines = valueString.Split(new[] {
+					'\r',
+					'\n'
+				},
+				StringSplitOptions.RemoveEmptyEntries).ToList();
+
+			if (lines.Count <= 1)
 			{
-				_writer.WriteLine("{0} = {1}", key, text);
-				return;
+				_writer.WriteLine("{0} = {1}", key, valueString);
 			}
-			_writer.WriteLine("{0} = ", key);
-			_writer.Indent++;
-			list.ForEach(_writer.WriteLine);
-			_writer.Indent--;
+			else
+			{
+				_writer.WriteLine("{0} = ", key);
+				_writer.Indent++;
+				lines.ForEach(_writer.WriteLine);
+				_writer.Indent--;
+			}
 		}
 
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter/RecursiveObjectPrinter::PrintObjectMembers(System.Object)")]
 		private void PrintObjectMembers(object o)
 		{
 			if (o == null)
@@ -68,46 +66,40 @@ public class UnityPrinter
 				_writer.WriteLine("(null)");
 				return;
 			}
-			Type type = o.GetType();
-			PropertyInfo[] properties = type.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-			PropertyInfo[] array = properties;
-			foreach (PropertyInfo prop in array)
+			var type = o.GetType();
+			var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+			foreach (var prop in props)
 			{
-				Type propertyType = prop.PropertyType;
-				PrintValue($"{propertyType.Name} {prop.Name}", () => prop.GetValue(o, null));
+				var propType = prop.PropertyType;
+				PrintValue(string.Format("{0} {1}", propType.Name, prop.Name), () => prop.GetValue(o, null));
 			}
-			FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public);
-			FieldInfo[] array2 = fields;
-			foreach (FieldInfo field in array2)
+			var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
+			foreach (var field in fields)
 			{
-				Type fieldType = field.FieldType;
-				PrintValue($"{fieldType.Name} {field.Name}", () => field.GetValue(o));
+				var propType = field.FieldType;
+				PrintValue(string.Format("{0} {1}", propType.Name, field.Name), () => field.GetValue(o));
 			}
 		}
 
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter/RecursiveObjectPrinter::PrintObject(UnityEngine.Object,System.Int32)")]
-		public void PrintObject(UnityEngine.Object o, int recursionDepth = 0)
+		public void PrintObject(Object o, int recursionDepth = 0)
 		{
-			Component component = o as Component;
-			GameObject gameObject = o as GameObject;
-			if (component == null && gameObject == null)
+			var asComponent = o as Component;
+			var asGameObject = o as GameObject;
+			if (asComponent == null && asGameObject == null)
 			{
 				_writer.WriteLine("{0} : {1}", o.GetType(), o.name);
 				_writer.Indent++;
 				PrintObjectMembers(o);
 				_writer.Indent--;
+				return;
 			}
-			else
+			if (asComponent != null)
 			{
-				if (component != null)
-				{
-					gameObject = component.gameObject;
-				}
-				PrintUnityGameObject(gameObject, recursionDepth);
+				asGameObject = asComponent.gameObject;
 			}
+			PrintUnityGameObject(asGameObject, recursionDepth);
 		}
 
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter/RecursiveObjectPrinter::PrintUnityGameObject(UnityEngine.GameObject,System.Int32)")]
 		public void PrintUnityGameObject(GameObject o, int recursionDepth = 0)
 		{
 			if (o == null)
@@ -128,28 +120,27 @@ public class UnityPrinter
 			}
 			_writer.WriteLine();
 			_writer.Indent++;
-			_writer.WriteLine("Parent: " + o.transform.parent?.name);
+			_writer.WriteLine($"Parent: {o.transform.parent?.name}");
 			_writer.WriteLine("Components:");
 			_writer.Indent++;
+
 			_visited[o] = true;
-			Component[] array = o.Components(typeof(Component));
-			foreach (Component component in array)
+			foreach (var component in o.Components(typeof(Component)))
 			{
 				_writer.WriteLine("[Component] {0}", component.GetType().Name);
-				if (_parent.ComponentFilter(component))
-				{
-					_writer.Indent++;
-					PrintObjectMembers(component);
-					_writer.Indent--;
-				}
+				if (!_parent.ComponentFilter(component)) continue;
+				_writer.Indent++;
+				PrintObjectMembers(component);
+				_writer.Indent--;
 			}
 			_writer.Indent--;
 			_writer.WriteLine("Children:");
-			int childCount = o.transform.childCount;
-			for (int j = 0; j < childCount; j++)
+
+			var numChildren = o.transform.childCount;
+			for (int i = 0; i < numChildren; i++)
 			{
-				Transform child = o.transform.GetChild(j);
-				_writer.Write("{0}.\t [Child] ", j);
+				var child = o.transform.GetChild(i);
+				_writer.Write("{0}.\t [Child] ", i);
 				if (_parent.GameObjectFilter(child.gameObject))
 				{
 					PrintUnityGameObject(child.gameObject, recursionDepth + 1);
@@ -159,100 +150,121 @@ public class UnityPrinter
 		}
 	}
 
-	private readonly IDictionary<object, double> _timestamps = new Dictionary<object, double>();
-
-	public static UnityPrinter FullPrinter = new UnityPrinter
-	{
-		MillisecondInterval = 1000.0
-	};
-
-	public static UnityPrinter HierarchyPrinter = new UnityPrinter
-	{
-		ComponentFilter = (Component x) => false,
-		MillisecondInterval = 1000.0
-	};
-
-	public static readonly UnityPrinter ShallowPrinter = new UnityPrinter
-	{
-		ComponentFilter = (Component x) => false,
-		MaxRecursionDepth = 1,
-		MillisecondInterval = 1000.0
-	};
-
-	public static readonly UnityPrinter ComponentPrinter = new UnityPrinter
-	{
-		ComponentFilter = (Component x) => true,
-		MaxRecursionDepth = 1,
-		MillisecondInterval = 1000.0
-	};
-
+	/// <summary>
+	/// A filter that determines which GameObject descendants will be expanded.
+	/// </summary>
 	public Func<GameObject, bool> GameObjectFilter
 	{
-		[PatchedByMember("System.Func`2<UnityEngine.GameObject,System.Boolean> IEMod.Helpers.UnityPrinter::get_GameObjectFilter()")]
 		get;
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter::set_GameObjectFilter(System.Func`2<UnityEngine.GameObject,System.Boolean>)")]
 		set;
 	}
 
+	/// <summary>
+	/// A filter that determines which Components will be expanded (printed with properties).
+	/// </summary>
 	public Func<Component, bool> ComponentFilter
 	{
-		[PatchedByMember("System.Func`2<UnityEngine.Component,System.Boolean> IEMod.Helpers.UnityPrinter::get_ComponentFilter()")]
 		get;
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter::set_ComponentFilter(System.Func`2<UnityEngine.Component,System.Boolean>)")]
 		set;
 	}
 
+	/// <summary>
+	/// Max recursion depth when printing descendants. 0 means only the current object is expanded.
+	/// </summary>
 	public int MaxRecursionDepth
 	{
-		[PatchedByMember("System.Int32 IEMod.Helpers.UnityPrinter::get_MaxRecursionDepth()")]
 		get;
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter::set_MaxRecursionDepth(System.Int32)")]
 		set;
 	}
 
+	/// <summary>
+	/// The millisecond interval between print calls to print the same object. This stops the same object being printed too frequently.
+	/// </summary>
 	public double MillisecondInterval
 	{
-		[PatchedByMember("System.Double IEMod.Helpers.UnityPrinter::get_MillisecondInterval()")]
 		get;
-		[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter::set_MillisecondInterval(System.Double)")]
 		set;
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter::.ctor()")]
+	private readonly IDictionary<object, double> _timestamps = new Dictionary<object, double>();
+
+	/// <summary>
+	/// Preconfigured printed that prints all descendants, their respective components, and the properties and fields of those components. Prints the same object once per second.
+	/// </summary>
+	/// <remarks>
+	/// Note that for large objects this printer can take some time, and produces files that are difficult to read.
+	/// </remarks>
+	public static UnityPrinter FullPrinter = new UnityPrinter()
+	{
+		MillisecondInterval = 1000
+	};
+
+	/// <summary>
+	/// Preconfigured printer that prints all descendants, but doesn't expand any components. Good for viewing the hierarchy. Prints the same object up to once per second.
+	/// </summary>
+	public static UnityPrinter HierarchyPrinter = new UnityPrinter()
+	{
+		ComponentFilter = x => false,
+		MillisecondInterval = 1000
+	};
+
+	/// <summary>
+	/// Preconfigured printer that prints the object only (it doesn't expand components or children). Prints the same object up to once per second.
+	/// </summary>
+	public static readonly UnityPrinter ShallowPrinter = new UnityPrinter()
+	{
+		ComponentFilter = x => false,
+		MaxRecursionDepth = 1,
+		MillisecondInterval = 1000
+	};
+
+	/// <summary>
+	/// Preconfigured printer that fully expands the object's components, but does not expand its children.
+	/// </summary>
+	public static readonly UnityPrinter ComponentPrinter = new UnityPrinter()
+	{
+		ComponentFilter = x => true,
+		MaxRecursionDepth = 1,
+		MillisecondInterval = 1000
+	};
+
+	/// <summary>
+	/// Use the initializer syntax to set properties.
+	/// </summary>
 	public UnityPrinter()
 	{
-		GameObjectFilter = (GameObject x) => true;
-		ComponentFilter = (Component x) => true;
+		GameObjectFilter = x => true;
+		ComponentFilter = x => true;
 		MaxRecursionDepth = 1024;
-		MillisecondInterval = 0.0;
+		MillisecondInterval = 0;
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.UnityPrinter::Print(UnityEngine.Object)")]
-	public void Print(UnityEngine.Object o)
+	public void Print(Object o)
 	{
 		IEDebug.Log(PrintString(o));
 	}
 
-	[PatchedByMember("System.String IEMod.Helpers.UnityPrinter::PrintString(UnityEngine.Object)")]
-	public string PrintString(UnityEngine.Object o)
+	public string PrintString(Object o)
 	{
-		double totalMilliseconds = TimeSpan.FromTicks(Environment.TickCount).TotalMilliseconds;
+		var newTime = TimeSpan.FromTicks(Environment.TickCount).TotalMilliseconds;
 		if (_timestamps.ContainsKey(o))
 		{
-			double num = _timestamps[o];
-			if (totalMilliseconds - num < MillisecondInterval)
+			var lastTime = _timestamps[o];
+			if (newTime - lastTime < MillisecondInterval)
 			{
 				return "";
 			}
 		}
-		_timestamps[o] = totalMilliseconds;
-		StringWriter stringWriter = new StringWriter();
-		IndentedTextWriter indentedTextWriter = new IndentedTextWriter(stringWriter);
-		RecursiveObjectPrinter recursiveObjectPrinter = new RecursiveObjectPrinter(indentedTextWriter, this);
-		recursiveObjectPrinter.PrintObject(o);
-		indentedTextWriter.Flush();
-		stringWriter.Flush();
+		_timestamps[o] = newTime;
+		var strWriter = new StringWriter();
+		var indentedWriter = new IndentedTextWriter(strWriter);
+		var printer = new RecursiveObjectPrinter(indentedWriter, this);
+		printer.PrintObject(o);
+		indentedWriter.Flush();
+		strWriter.Flush();
 		_timestamps[o] = TimeSpan.FromTicks(Environment.TickCount).TotalMilliseconds;
-		return stringWriter.ToString();
+		return strWriter.ToString();
 	}
+
+
 }

@@ -1,13 +1,10 @@
-﻿// IEMod.Helpers.DeadEndException
-using Patchwork.Attributes;
-
-[NewType(null, null)]
-[PatchedByType("IEMod.Helpers.DeadEndException")]
+﻿/// <summary>
+/// Indicates that the code should be unreachable.
+/// </summary>
 public class DeadEndException : IEModException
 {
-	[PatchedByMember("System.Void IEMod.Helpers.DeadEndException::.ctor(System.String)")]
 	public DeadEndException(string location)
-		: base($"Code should be unreachable. Location: {location}")
+	: base(string.Format("Code should be unreachable. Location: {0}", location))
 	{
 	}
 }

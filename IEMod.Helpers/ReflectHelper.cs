@@ -1,101 +1,133 @@
-﻿// IEMod.Helpers.ReflectHelper
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Patchwork.Attributes;
 using UnityEngine;
 
-[NewType(null, null)]
-[PatchedByType("IEMod.Helpers.ReflectHelper")]
-public static class ReflectHelper
+public class MemberAccess<T>
 {
-	[PatchedByMember("System.Collections.Generic.IEnumerable`1<T> IEMod.Helpers.ReflectHelper::GetCustomAttributes(System.Reflection.ICustomAttributeProvider)")]
-	public static IEnumerable<T> GetCustomAttributes<T>(this ICustomAttributeProvider provider)
+	private readonly MemberExpression _expression;
+
+	public Action<T> Setter
 	{
-		return provider.GetCustomAttributes(typeof(T), inherit: true).OfType<T>();
+		get;
+		private set;
 	}
 
-	[PatchedByMember("T IEMod.Helpers.ReflectHelper::GetCustomAttribute(System.Reflection.ICustomAttributeProvider)")]
+	public Func<T> Getter
+	{
+		get;
+		private set;
+	}
+
+	public MemberInfo TopmostMember
+	{
+		get;
+		private set;
+	}
+
+	public Func<object> InstanceGetter
+	{
+		get;
+		private set;
+	}
+
+	public MemberAccess(Expression<Func<T>> expression)
+	{
+		var asMemberExpr = (MemberExpression)expression.Body;
+		_expression = asMemberExpr;
+		Getter = ReflectHelper.CreateGetter(expression);
+		Getter = expression.Compile();
+		var setter = ReflectHelper.CreateSetter(expression);
+		Setter = v => setter(v);
+		TopmostMember = asMemberExpr.Member;
+		InstanceGetter = ReflectHelper.CreateGetter(asMemberExpr.Expression);
+	}
+}
+
+public static class ReflectHelper
+{
+	public static IEnumerable<T> GetCustomAttributes<T>(this ICustomAttributeProvider provider)
+	{
+		return provider.GetCustomAttributes(typeof(T), true).OfType<T>();
+	}
+
 	public static T GetCustomAttribute<T>(this ICustomAttributeProvider provider)
 	{
 		return provider.GetCustomAttributes<T>().SingleOrDefault();
 	}
 
-	[PatchedByMember("System.Action`1<System.Object> IEMod.Helpers.ReflectHelper::CreateSetter(System.Linq.Expressions.MemberExpression)")]
 	public static Action<object> CreateSetter(MemberExpression expr)
 	{
 		if (expr == null)
 		{
 			throw IEDebug.Exception(null, "The expression is not allowed to be null.");
 		}
-		Func<object> targetGetter = CreateGetter(expr.Expression);
+		var targetGetter = CreateGetter(expr.Expression);
+		Action<object> setter;
 		if (expr.Member is FieldInfo)
 		{
-			FieldInfo asFieldInfo = (FieldInfo)expr.Member;
-			return delegate (object value)
-			{
-				asFieldInfo.SetValue(targetGetter(), value);
-			};
+			var asFieldInfo = (FieldInfo)expr.Member;
+			setter = value => asFieldInfo.SetValue(targetGetter(), value);
 		}
-		if (expr.Member is PropertyInfo)
+		else if (expr.Member is PropertyInfo)
 		{
-			PropertyInfo asPropertyInfo = (PropertyInfo)expr.Member;
-			return delegate (object value)
-			{
-				asPropertyInfo.SetValue(targetGetter(), value, null);
-			};
+			var asPropertyInfo = (PropertyInfo)expr.Member;
+			setter = value => asPropertyInfo.SetValue(targetGetter(), value, null);
 		}
-		throw new IEModException("Expected PropertyInfo or FieldInfo member, but got: " + expr.Member);
+		else
+		{
+			throw new IEModException(
+				"Expected PropertyInfo or FieldInfo member, but got: "
+					+ expr.Member);
+		}
+		return setter;
 	}
 
-	[PatchedByMember("System.Action`1<T> IEMod.Helpers.ReflectHelper::CreateSetter(System.Linq.Expressions.Expression`1<System.Func`1<T>>)")]
+	/// <summary>
+	/// Takes an expression which is expected to be a member access expression (e.g. x.Prop1.Field2.Prop3), and returns a setter for setting that member on that target.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="memberAccess"></param>
+	/// <returns></returns>
 	public static Action<T> CreateSetter<T>(Expression<Func<T>> memberAccess)
 	{
 		if (!(memberAccess.Body is MemberExpression))
 		{
 			throw IEDebug.Exception(null, "The topmost expression must be a simple member access expression.");
 		}
-		return delegate (T v)
-		{
-			CreateSetter((MemberExpression)memberAccess.Body)(v);
-		};
+		return v => CreateSetter((MemberExpression)memberAccess.Body)(v);
 	}
 
-	[PatchedByMember("System.Func`1<T> IEMod.Helpers.ReflectHelper::CreateGetter(System.Linq.Expressions.Expression`1<System.Func`1<T>>)")]
 	public static Func<T> CreateGetter<T>(Expression<Func<T>> memberAccess)
 	{
 		return () => (T)CreateGetter(memberAccess.Body)();
 	}
 
-	[PatchedByMember("System.Func`1<System.Object> IEMod.Helpers.ReflectHelper::CreateBaseGetter(System.Linq.Expressions.Expression`1<System.Func`1<T>>)")]
 	public static Func<object> CreateBaseGetter<T>(Expression<Func<T>> memberAccess)
 	{
 		if (!(memberAccess.Body is MemberExpression))
 		{
 			throw IEDebug.Exception(null, "The topmost expression must be a simple member access expression.");
 		}
-		MemberExpression memberExpression = (MemberExpression)memberAccess.Body;
-		return CreateGetter(memberExpression.Expression);
+		var asMemberExpr = (MemberExpression)memberAccess.Body;
+		return CreateGetter(asMemberExpr.Expression);
 	}
 
-	[PatchedByMember("System.String IEMod.Helpers.ReflectHelper::TryGetName(System.Object)")]
 	public static string TryGetName(object o)
 	{
-		IGameObjectWrapper gameObjectWrapper = o as IGameObjectWrapper;
-		GameObject gameObject = o as GameObject;
-		return (gameObjectWrapper != null) ? gameObjectWrapper.Name : gameObject?.name;
+		var wrapper = o as IGameObjectWrapper;
+		var go = o as GameObject;
+		return wrapper != null ? wrapper.Name : go?.name;
 	}
 
-	[PatchedByMember("IEMod.Helpers.MemberAccess`1<T> IEMod.Helpers.ReflectHelper::AnalyzeMember(System.Linq.Expressions.Expression`1<System.Func`1<T>>)")]
 	public static MemberAccess<T> AnalyzeMember<T>(Expression<Func<T>> memberAccessExpr)
 	{
 		return new MemberAccess<T>(memberAccessExpr);
 	}
 
-	[PatchedByMember("System.Func`1<System.Object> IEMod.Helpers.ReflectHelper::CreateGetter(System.Linq.Expressions.Expression)")]
 	public static Func<object> CreateGetter(Expression expr)
 	{
 		if (expr == null)
@@ -105,42 +137,41 @@ public static class ReflectHelper
 		switch (expr.NodeType)
 		{
 			case ExpressionType.Constant:
-				{
-					ConstantExpression asConst = (ConstantExpression)expr;
-					return () => asConst.Value;
-				}
+				var asConst = (ConstantExpression)expr;
+				return () => asConst.Value;
 			case ExpressionType.MemberAccess:
+				var asMember = (MemberExpression)expr;
+				var targetGetter = CreateGetter(asMember.Expression);
+				if (asMember.Member is FieldInfo)
 				{
-					MemberExpression memberExpression = (MemberExpression)expr;
-					Func<object> targetGetter = CreateGetter(memberExpression.Expression);
-					if (memberExpression.Member is FieldInfo)
-					{
-						FieldInfo field = (FieldInfo)memberExpression.Member;
-						return () => field.GetValue(targetGetter());
-					}
-					if (memberExpression.Member is PropertyInfo)
-					{
-						PropertyInfo prop = (PropertyInfo)memberExpression.Member;
-						return () => prop.GetValue(targetGetter(), null);
-					}
-					throw IEDebug.Exception(null, "Unexpected member type ", memberExpression.Member.GetType());
+					var field = (FieldInfo)asMember.Member;
+					return () => field.GetValue(targetGetter());
 				}
+				if (asMember.Member is PropertyInfo)
+				{
+					var prop = (PropertyInfo)asMember.Member;
+					return () => prop.GetValue(targetGetter(), null);
+				}
+				throw IEDebug.Exception(null, "Unexpected member type ", asMember.Member.GetType());
 			default:
 				throw IEDebug.Exception(null, "Unexpected node type {0}", expr.NodeType);
+
 		}
 	}
 
-	[PatchedByMember("System.String IEMod.Helpers.ReflectHelper::GetLabelInfo(System.Reflection.MemberInfo)")]
 	public static string GetLabelInfo(MemberInfo provider)
 	{
-		string text = GetCustomAttribute<LabelAttribute>(provider)?.Label;
-		return text ?? provider.Name;
+		var labelAttr = provider.GetCustomAttribute<LabelAttribute>();
+		var label = labelAttr == null ? null : labelAttr.Label;
+		label = label ?? provider.Name;
+		return label;
 	}
 
-	[PatchedByMember("System.String IEMod.Helpers.ReflectHelper::GetDescriptionInfo(System.Reflection.MemberInfo)")]
 	public static string GetDescriptionInfo(MemberInfo provider)
 	{
-		string text = GetCustomAttribute<DescriptionAttribute>(provider)?.Description;
-		return text ?? provider.Name;
+		var descAttr = provider.GetCustomAttribute<DescriptionAttribute>();
+		var desc = descAttr == null ? null : descAttr.Description;
+		desc = desc ?? provider.Name;
+		return desc;
 	}
 }

@@ -1,54 +1,64 @@
-﻿// IEMod.Helpers.UnityObjectExtensions
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Patchwork.Attributes;
 using UnityEngine;
 
-[NewType(null, null)]
-[PatchedByType("IEMod.Helpers.UnityObjectExtensions")]
+public static class ControlHelper
+{
+	/// <summary>
+	/// Sets the selected value for dropdowns that use IEDropdownChoice.
+	/// </summary>
+	/// <param name="dropdown"></param>
+	/// <param name="value"></param>
+	public static void SetSelectedValue(this UIDropdownMenu dropdown, object value)
+	{
+		dropdown.SelectedItem = dropdown.Options.Cast<IEDropdownChoice>().SingleOrDefault(x => Equals(x.Value, value))
+			?? dropdown.Options[0];
+	}
+}
+
+/// <summary>
+/// Various helper extension methods for common tasks involving navigating the unity GameObject and Component model. 
+/// </summary>
 public static class UnityObjectExtensions
 {
-	[PatchedByMember("System.Void IEMod.Helpers.UnityObjectExtensions::MaybeUnregister(GUIDatabaseString)")]
 	public static void MaybeUnregister(this GUIDatabaseString str)
 	{
-		if (str is IEModString iEModString)
+		var asIEString = str as IEModString;
+		if (asIEString != null)
 		{
-			iEModString.Unregister();
+			asIEString.Unregister();
 		}
 	}
 
-	[PatchedByMember("UnityEngine.Vector3 IEMod.Helpers.UnityObjectExtensions::ScaleBy(UnityEngine.Vector3,System.Single)")]
 	public static Vector3 ScaleBy(this Vector3 self, float scalar)
 	{
 		self.Set(self.x * scalar, self.y * scalar, self.z * scalar);
 		return self;
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.UnityObjectExtensions::SetBehaviors(UnityEngine.GameObject,System.Boolean)")]
+	/// <summary>
+	/// Destroys components of the specified type, with the specified name.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="self"></param>
+	/// <param name="newState"></param>
 	public static void SetBehaviors<T>(this GameObject self, bool newState) where T : Behaviour
 	{
-		List<T> list = self.Components<T>().ToList();
-		if (list.Count == 0)
+		var components = self.Components<T>().ToList();
+		if (components.Count == 0)
 		{
 			IEDebug.Log(null, "WARNING: In GameObject {0}, told to set behaviors of type {1} to {2}, but no behaviors of this type were found.", self.name, typeof(T), newState);
+			return;
 		}
-		else
-		{
-			list.ForEach(delegate (T x)
-			{
-				x.enabled = newState;
-			});
-		}
+		components.ForEach(x => x.enabled = newState);
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.UnityObjectExtensions::AddChild(UnityEngine.GameObject,UnityEngine.GameObject)")]
 	public static void AddChild(this GameObject self, GameObject child)
 	{
 		child.transform.parent = self.transform;
 	}
 
-	[PatchedByMember("System.Void IEMod.Helpers.UnityObjectExtensions::AssertAlive(UnityEngine.GameObject)")]
 	public static void AssertAlive(this GameObject o)
 	{
 		if (o == null)
@@ -57,41 +67,53 @@ public static class UnityObjectExtensions
 		}
 	}
 
-	[PatchedByMember("UnityEngine.GameObject IEMod.Helpers.UnityObjectExtensions::ChildPath(UnityEngine.GameObject,System.String)")]
+	/// <summary>
+	/// Returns the child at the specified path, where 'path' is a string like name1/name2/name3. You can use #N/name1/#M, where #N is child number N.
+	/// </summary>
+	/// <param name="start"></param>
+	/// <param name="path"></param>
+	/// <returns></returns>
 	public static GameObject ChildPath(this GameObject start, string path)
 	{
-		string[] array = path.Split('/');
-		GameObject gameObject = start;
-		string[] array2 = array;
-		foreach (string text in array2)
+		var names = path.Split('/');
+		GameObject current = start;
+		foreach (var curName in names)
 		{
-			string text2 = text;
-			if (!(text2 == ""))
+			var name = curName;
+			if (name == "") continue;
+			int asInt;
+			var hasHashFirst = name.StartsWith("#");
+			if (hasHashFirst)
 			{
-				bool flag = text2.StartsWith("#");
-				if (flag)
-				{
-					text2 = text2.Substring(1);
-				}
-				gameObject = ((flag && int.TryParse(text2, out var result)) ? gameObject.Child(result) : gameObject.Child(text2));
+				name = name.Substring(1);
 			}
+			current = hasHashFirst && int.TryParse(name, out asInt) ? current.Child(asInt) : current.Child(name);
 		}
-		return gameObject;
+		return current;
 	}
 
-	[PatchedByMember("System.Boolean IEMod.Helpers.UnityObjectExtensions::HasChild(UnityEngine.GameObject,System.String)")]
+	/// <summary>
+	/// Does it have a child with this name?
+	/// </summary>
+	/// <param name="o"></param>
+	/// <param name="name"></param>
+	/// <returns></returns>
 	public static bool HasChild(this GameObject o, string name)
 	{
 		return o.Children(name).Any();
 	}
 
-	[PatchedByMember("System.Boolean IEMod.Helpers.UnityObjectExtensions::HasComponent(UnityEngine.GameObject)")]
+	/// <summary>
+	/// Does it have a component of this type?
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="o"></param>
+	/// <returns></returns>
 	public static bool HasComponent<T>(this GameObject o) where T : Component
 	{
-		return (UnityEngine.Object)o.GetComponent<T>() != (UnityEngine.Object)null;
+		return o.GetComponent<T>() != null;
 	}
 
-	[PatchedByMember("UnityEngine.Component[] IEMod.Helpers.UnityObjectExtensions::Components(UnityEngine.GameObject,System.Type)")]
 	public static Component[] Components(this GameObject o, Type t = null)
 	{
 		if (o == null)
@@ -101,29 +123,29 @@ public static class UnityObjectExtensions
 		return o.GetComponents(t ?? typeof(Component));
 	}
 
-	[PatchedByMember("T[] IEMod.Helpers.UnityObjectExtensions::Components(UnityEngine.GameObject)")]
-	public static T[] Components<T>(this GameObject o) where T : Component
+	public static T[] Components<T>(this GameObject o)
+		where T : Component
 	{
 		return o.Components(typeof(T)).Cast<T>().ToArray();
 	}
 
-	[PatchedByMember("T IEMod.Helpers.UnityObjectExtensions::Component(UnityEngine.GameObject)")]
+
 	public static T Component<T>(this GameObject o) where T : Component
 	{
 		if (o == null)
 		{
 			throw IEDebug.Exception(null, $"When trying to get component of type {typeof(T)}: GameObject cannot be null.");
 		}
-		T[] array = o.Components<T>();
-		if (array.Length > 1 || array.Length == 0)
+		var components = o.Components<T>();
+		if (components.Length > 1 || components.Length == 0)
 		{
 			UnityPrinter.ShallowPrinter.Print(o);
-			throw IEDebug.Exception(null, "GameObject '{0}' has {1} components of type {2}, but told to pick exactly one.", o.name, array.Length, typeof(T));
+			throw IEDebug.Exception(null, "GameObject '{0}' has {1} components of type {2}, but told to pick exactly one.",
+				o.name, components.Length, typeof(T));
 		}
-		return array[0];
+		return components[0];
 	}
 
-	[PatchedByMember("T[] IEMod.Helpers.UnityObjectExtensions::ComponentsInDescendants(UnityEngine.Component,System.Boolean)")]
 	public static T[] ComponentsInDescendants<T>(this Component c, bool inactive = true) where T : Component
 	{
 		if (c == null)
@@ -133,7 +155,6 @@ public static class UnityObjectExtensions
 		return c.gameObject.ComponentsInDescendants<T>(inactive);
 	}
 
-	[PatchedByMember("T IEMod.Helpers.UnityObjectExtensions::ComponentInDescendants(UnityEngine.Component,System.Boolean)")]
 	public static T ComponentInDescendants<T>(this Component c, bool inactive = true) where T : Component
 	{
 		if (c == null)
@@ -143,7 +164,6 @@ public static class UnityObjectExtensions
 		return c.gameObject.ComponentInDescendants<T>(inactive);
 	}
 
-	[PatchedByMember("T[] IEMod.Helpers.UnityObjectExtensions::ComponentsInDescendants(UnityEngine.GameObject,System.Boolean)")]
 	public static T[] ComponentsInDescendants<T>(this GameObject o, bool inactive = true) where T : Component
 	{
 		if (o == null)
@@ -153,23 +173,32 @@ public static class UnityObjectExtensions
 		return o.GetComponentsInChildren<T>(inactive);
 	}
 
-	[PatchedByMember("T IEMod.Helpers.UnityObjectExtensions::ComponentInDescendants(UnityEngine.GameObject,System.Boolean)")]
+	/// <summary>
+	/// Also returns components in Self.
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	/// <param name="o"></param>
+	/// <param name="inactive"></param>
+	/// <returns></returns>
 	public static T ComponentInDescendants<T>(this GameObject o, bool inactive = true) where T : Component
 	{
 		if (o == null)
 		{
 			throw IEDebug.Exception(null, "GameObject cannot be null.");
 		}
-		T[] array = o.ComponentsInDescendants<T>(inactive);
-		if (array.Length == 0 || array.Length > 1)
+		var components = o.ComponentsInDescendants<T>(inactive);
+		if (components.Length == 0 || components.Length > 1)
 		{
-			throw IEDebug.Exception(null, "GameObject '{0}' has {1} components of type {2} in its children, but told to pick exactly one.", o.name, array.Length, typeof(T));
+			throw IEDebug.Exception(null,
+				"GameObject '{0}' has {1} components of type {2} in its children, but told to pick exactly one.", o.name,
+				components.Length, typeof(T));
 		}
-		return array[0];
+		return components[0];
 	}
 
-	[PatchedByMember("System.Collections.Generic.IList`1<T> IEMod.Helpers.UnityObjectExtensions::Components(UnityEngine.Component)")]
-	public static IList<T> Components<T>(this Component o) where T : Component
+
+	public static IList<T> Components<T>(this Component o)
+		where T : Component
 	{
 		if (o == null)
 		{
@@ -178,7 +207,6 @@ public static class UnityObjectExtensions
 		return o.gameObject.Components<T>();
 	}
 
-	[PatchedByMember("T IEMod.Helpers.UnityObjectExtensions::Component(UnityEngine.Component)")]
 	public static T Component<T>(this Component o) where T : Component
 	{
 		if (o == null)
@@ -188,68 +216,101 @@ public static class UnityObjectExtensions
 		return o.gameObject.Component<T>();
 	}
 
-	[PatchedByMember("System.Boolean IEMod.Helpers.UnityObjectExtensions::HasComponent(UnityEngine.Component)")]
 	public static bool HasComponent<T>(this Component o) where T : Component
 	{
 		return o.gameObject.HasComponent<T>();
 	}
 
-	[PatchedByMember("UnityEngine.GameObject IEMod.Helpers.UnityObjectExtensions::Child(UnityEngine.Component,System.String)")]
+	/// <summary>
+	/// Returns a child with this name.
+	/// </summary>
+	/// <param name="c"></param>
+	/// <param name="name"></param>
+	/// <returns></returns>
 	public static GameObject Child(this Component c, string name)
 	{
 		return c.gameObject.Child(name);
 	}
 
-	[PatchedByMember("UnityEngine.GameObject IEMod.Helpers.UnityObjectExtensions::Child(UnityEngine.Component,System.Int32)")]
 	public static GameObject Child(this Component c, int n)
 	{
 		return c.gameObject.Child(n);
 	}
 
-	[PatchedByMember("UnityEngine.GameObject IEMod.Helpers.UnityObjectExtensions::Child(UnityEngine.GameObject,System.String)")]
+
+	/// <summary>
+	/// Gets the child with this name, or throws an exception.
+	/// </summary>
+	/// <param name="o"></param>
+	/// <param name="name"></param>
+	/// <returns></returns>
 	public static GameObject Child(this GameObject o, string name)
 	{
 		if (o == null)
 		{
 			throw IEDebug.Exception(null, "When trying to get Child with name '{0}': gameObject cannot be null.", name);
 		}
-		List<GameObject> list = (from x in o.Children()
-								 where x.gameObject.name == name
-								 select x).ToList();
-		if (list.Count == 0 || list.Count > 1)
+		var seq = o.Children().Where(x => x.gameObject.name == name).ToList();
+		if (seq.Count == 0 || seq.Count > 1)
 		{
 			UnityPrinter.ShallowPrinter.Print(o);
-			throw IEDebug.Exception(null, "GameObject '{0}' has {1} children with the name '{2}', but told to pick exactly one.", o.name, list.Count, name);
+			throw IEDebug.Exception(null,
+				"GameObject '{0}' has {1} children with the name '{2}', but told to pick exactly one.", o.name, seq.Count, name);
 		}
-		return list[0];
+		return seq[0];
 	}
 
-	[PatchedByMember("UnityEngine.Vector3 IEMod.Helpers.UnityObjectExtensions::Plus(UnityEngine.Vector3,System.Single,System.Single,System.Single)")]
+	/// <summary>
+	/// Adds the specified values to the vector's components. Use named arguments to add to specific components.
+	/// </summary>
+	/// <param name="self"></param>
+	/// <param name="x"></param>
+	/// <param name="y"></param>
+	/// <param name="z"></param>
+	/// <returns></returns>
 	public static Vector3 Plus(this Vector3 self, float x = 0f, float y = 0f, float z = 0f)
 	{
 		return new Vector3(self.x + x, self.y + y, self.z + z);
 	}
-
-	[PatchedByMember("UnityEngine.Vector2 IEMod.Helpers.UnityObjectExtensions::Plus(UnityEngine.Vector2,System.Single,System.Single)")]
+	/// <summary>
+	/// Adds the specified values to the vector's components. Use named arguments to add to specific components.
+	/// </summary>
+	/// <param name="self"></param>
+	/// <param name="x"></param>
+	/// <param name="y"></param>
+	/// <returns></returns>
 	public static Vector2 Plus(this Vector2 self, float x = 0f, float y = 0f)
 	{
 		return new Vector2(self.x + x, self.y + y);
 	}
 
-	[PatchedByMember("UnityEngine.Vector4 IEMod.Helpers.UnityObjectExtensions::Plus(UnityEngine.Vector4,System.Single,System.Single,System.Single,System.Single)")]
+	/// <summary>
+	/// Adds the specified values to the vector's components. Use named arguments to add to specific components.
+	/// </summary>
+	/// <param name="self"></param>
+	/// <param name="x"></param>
+	/// <param name="y"></param>
+	/// <param name="z"></param>
+	/// <param name="w"></param>
+	/// <returns></returns>
 	public static Vector4 Plus(this Vector4 self, float x = 0f, float y = 0f, float z = 0f, float w = 0f)
 	{
 		return new Vector4(self.x + x, self.y + y, self.z + z, self.w + w);
 	}
 
-	[PatchedByMember("UnityEngine.GameObject IEMod.Helpers.UnityObjectExtensions::Child(UnityEngine.GameObject,System.Int32)")]
+	/// <summary>
+	/// Returns the ith child of this game object, or throws an exception.
+	/// </summary>
+	/// <param name="o"></param>
+	/// <param name="i"></param>
+	/// <returns></returns>
 	public static GameObject Child(this GameObject o, int i)
 	{
 		if (o == null)
 		{
 			throw IEDebug.Exception(null, "The GameObject cannot be null.");
 		}
-		Transform child = o.transform.GetChild(i);
+		var child = o.transform.GetChild(i);
 		if (child == null)
 		{
 			throw IEDebug.Exception(null, "The GameObject '{0}' has no child at index {1}", o.name, i);
@@ -257,40 +318,38 @@ public static class UnityObjectExtensions
 		return child.gameObject;
 	}
 
-	[PatchedByMember("System.Collections.Generic.IEnumerable`1<UnityEngine.GameObject> IEMod.Helpers.UnityObjectExtensions::Children(UnityEngine.GameObject,System.String)")]
 	public static IEnumerable<GameObject> Children(this GameObject o, string name = null)
 	{
-		return from Transform child in o.transform
-			   where name == null || name == child.name
-			   select child.gameObject;
+
+		return
+			from child in o.transform.Cast<Transform>()
+			where name == null || name == child.name
+			select child.gameObject;
 	}
 
-	[PatchedByMember("System.Collections.Generic.IEnumerable`1<UnityEngine.GameObject> IEMod.Helpers.UnityObjectExtensions::Descendants(UnityEngine.GameObject,System.String)")]
 	public static IEnumerable<GameObject> Descendants(this GameObject o, string name = null)
 	{
-		return from x in o.ComponentsInDescendants<Transform>()
-			   select x.gameObject into x
-			   where x.name == name
-			   select x;
+		return o.ComponentsInDescendants<Transform>().Select(x => x.gameObject).Where(x => x.name == name);
 	}
 
-	[PatchedByMember("UnityEngine.GameObject IEMod.Helpers.UnityObjectExtensions::Descendant(UnityEngine.GameObject,System.String)")]
 	public static GameObject Descendant(this GameObject o, string name)
 	{
+
 		if (o == null)
 		{
 			throw IEDebug.Exception(null, "GameObject cannot be null.");
 		}
-		IEnumerable<GameObject> source = o.Descendants(name);
-		GameObject[] array = source.ToArray();
-		if (array.Length == 0 || array.Length > 1)
+		var descendants = o.Descendants(name);
+		var gameObjects = descendants.ToArray();
+		if (gameObjects.Length == 0 || gameObjects.Length > 1)
 		{
-			throw IEDebug.Exception(null, "Game object '{0}' has {1} descendants with the name '{2}', but told to pick exactly one.", o.name, array.Count(), name);
+			throw IEDebug.Exception(null,
+				"Game object '{0}' has {1} descendants with the name '{2}', but told to pick exactly one.", o.name,
+				gameObjects.Count(), name);
 		}
-		return array[0];
+		return gameObjects[0];
 	}
 
-	[PatchedByMember("System.Collections.Generic.IEnumerable`1<UnityEngine.GameObject> IEMod.Helpers.UnityObjectExtensions::Descendants(UnityEngine.Component,System.String)")]
 	public static IEnumerable<GameObject> Descendants(this Component o, string name = null)
 	{
 		if (o == null)
@@ -300,13 +359,14 @@ public static class UnityObjectExtensions
 		return o.gameObject.Descendants(name);
 	}
 
-	[PatchedByMember("UnityEngine.GameObject IEMod.Helpers.UnityObjectExtensions::Descendant(UnityEngine.Component,System.String)")]
 	public static GameObject Descendant(this Component o, string name)
 	{
+
 		if (o == null)
 		{
 			throw IEDebug.Exception(null, "GameObject cannot be null.");
 		}
 		return o.gameObject.Descendant(name);
+
 	}
 }
