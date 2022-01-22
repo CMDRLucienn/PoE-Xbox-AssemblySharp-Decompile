@@ -4261,6 +4261,15 @@ public class CharacterStats : MonoBehaviour
 				{
 				}
 			}
+
+			CharacterStats charStats = base.gameObject.GetComponent<CharacterStats>();
+			if (charStats != null)
+			{
+				if (charStats.CharacterClass == Class.Priest || charStats.CharacterClass == Class.Wizard || charStats.CharacterClass == Class.Druid)
+				{
+					ResetSpellUsage(charStats);
+				}
+			}
 			PlayPartyFatigueSoundIfAble();
 		}
 		catch (Exception exception)
@@ -7737,4 +7746,107 @@ public class CharacterStats : MonoBehaviour
 		}
 		return Guid.Empty;
 	}
+
+	public void ResetSpellUsage(CharacterStats charStats)
+	{
+		int casterLevel = charStats.Level;
+		int[] unlockLevels = GetModifiedEncounterData();
+
+		for (int i = 0; i < unlockLevels.Length; i++)
+		{
+			if (casterLevel >= unlockLevels[i])
+			{
+				charStats.SpellCastCount[i] = 0;
+			}
+			else
+			{
+				break;  //Ugly optimisation if char is underlevelled
+			}
+		}
+	}
+
+	public int[] GetModifiedEncounterData()
+	{
+		int[] result = new int[Grimoire.MaxSpellLevel];
+		for (int i = 0; i < Grimoire.MaxSpellLevel; i++)
+		{
+			result[i] = 256;
+		}
+
+		switch (IEModOptions.PerEncounterSpellsSetting)
+		{
+			case IEModOptions.PerEncounterSpells.NoChange:
+			default:
+				//This isn't used, but we'll fill it in anyway
+				result[0] = 9;
+				result[1] = 11;
+				result[2] = 13;
+				break;
+
+			case IEModOptions.PerEncounterSpells.Levels_9_12:
+				result[0] = 9;
+				result[1] = 12;
+				break;
+
+			case IEModOptions.PerEncounterSpells.Levels_6_9_12:
+				result[0] = 6;
+				result[1] = 9;
+				result[2] = 12;
+				break;
+
+			case IEModOptions.PerEncounterSpells.Levels_8_10_12_14:
+				result[0] = 8;
+				result[1] = 10;
+				result[2] = 12;
+				result[3] = 14;
+				break;
+
+			case IEModOptions.PerEncounterSpells.Levels_6_9_12_14:
+				result[0] = 6;
+				result[1] = 9;
+				result[2] = 12;
+				result[3] = 14;
+				break;
+
+			case IEModOptions.PerEncounterSpells.Levels_6_8_10_12_14:
+				result[0] = 6;
+				result[1] = 8;
+				result[2] = 10;
+				result[3] = 12;
+				result[4] = 14;
+				break;
+
+			case IEModOptions.PerEncounterSpells.Levels_4_6_8_10_12_14:
+				result[0] = 4;
+				result[1] = 6;
+				result[2] = 8;
+				result[3] = 10;
+				result[4] = 12;
+				result[5] = 14;
+				break;
+
+			case IEModOptions.PerEncounterSpells.Levels_4_8_12_16:
+				result[0] = 4;
+				result[1] = 8;
+				result[2] = 12;
+				result[3] = 16;
+				break;
+
+			case IEModOptions.PerEncounterSpells.AllPerEncounter:
+				for (int i = 0; i < Grimoire.MaxSpellLevel; i++)
+				{
+					result[i] = 1;
+				}
+				break;
+
+			case IEModOptions.PerEncounterSpells.AllPerRest:
+				//Body intentionally left blank!
+				break;
+
+		}
+		return result;
+	}
+
+
+
 }

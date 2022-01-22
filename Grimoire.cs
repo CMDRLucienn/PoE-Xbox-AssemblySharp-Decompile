@@ -138,34 +138,42 @@ public class Grimoire : MonoBehaviour
 
 	private void Start()
 	{
-		if (Spells.Length != 8)
+		if (this.Spells.Length != MaxSpellLevel)
 		{
-			if (Spells.Length > 8)
+			if (this.Spells.Length > MaxSpellLevel)
 			{
 				Debug.LogError("Too many spell levels in grimoire '" + base.name + "': some will be dropped!");
 			}
-			SpellChapter[] array = new SpellChapter[8];
-			Spells.CopyTo(array, 0);
-			Spells = array;
+			Grimoire.SpellChapter[] array = new Grimoire.SpellChapter[MaxSpellLevel];
+			this.Spells.CopyTo(array, 0);
+			this.Spells = array;
+
 		}
-		for (int i = 0; i < Spells.Length; i++)
+		for (int i = 0; i < this.Spells.Length; i++)
 		{
-			if (Spells[i] == null)
+			if (this.Spells[i] == null)
 			{
-				Spells[i] = new SpellChapter();
+				this.Spells[i] = new Grimoire.SpellChapter();
 			}
-			else if (Spells[i].SpellData.Length != 4)
+			else if (this.Spells[i].SpellData.Length != MaxSpellsPerLevel + (int)IEModOptions.ExtraWizardSpells)
 			{
-				if (Spells[i].SpellData.Length > 4)
+				if (this.Spells[i].SpellData.Length > MaxSpellsPerLevel + (int)IEModOptions.ExtraWizardSpells)
 				{
-					Debug.LogError("Too many spell slots in grimoire '" + base.name + "' for level " + (i + 1) + ": some will be dropped!");
+					Debug.LogError(string.Concat(new object[]
+					{
+							"Too many spell slots in grimoire '",
+							base.name,
+							"' for level ",
+							i + 1,
+							": some will be dropped!"
+					}));
 				}
-				GenericSpell[] array2 = new GenericSpell[4];
-				for (int j = 0; j < Mathf.Min(array2.Length, Spells[i].SpellData.Length); j++)
+				GenericSpell[] array2 = new GenericSpell[(MaxSpellsPerLevel + (int)IEModOptions.ExtraWizardSpells)];
+				for (int j = 0; j < Mathf.Min(array2.Length, this.Spells[i].SpellData.Length); j++)
 				{
-					array2[j] = Spells[i].SpellData[j];
+					array2[j] = this.Spells[i].SpellData[j];
 				}
-				Spells[i].SpellData = array2;
+				this.Spells[i].SpellData = array2;
 			}
 		}
 	}
@@ -173,11 +181,21 @@ public class Grimoire : MonoBehaviour
 	public bool IsLevelFull(int level)
 	{
 		level--;
-		if (level < Spells.Length)
+
+		if (level >= this.Spells.Length)
 		{
-			return Spells[level].IsFull();
+			return true;
 		}
-		return true;
+
+		int numBonusSpells = (int)IEModOptions.ExtraWizardSpells;
+
+		if (numBonusSpells == 0 && Spells[level].IsFull())
+		{
+			return true;
+		}
+		int preparedCount = Spells[level].SpellData.Count(x => x);
+		var isFull = preparedCount == Spells[level].SpellData.Length;
+		return isFull;
 	}
 
 	public void RemoveAllSpells()
@@ -203,11 +221,11 @@ public class Grimoire : MonoBehaviour
 		if (spell != null)
 		{
 			int num = spell.SpellLevel - 1;
-			if (num >= 0 && num < 8)
+			if (num >= 0 && num < MaxSpellLevel)
 			{
-				for (int i = 0; i < 4; i++)
+				for (int i = 0; i < MaxSpellsPerLevel + (int)IEModOptions.ExtraWizardSpells; i++)
 				{
-					if (Spells[num].SpellData[i] != null && Spells[num].SpellData[i].DisplayName.StringID == spell.DisplayName.StringID)
+					if (this.Spells[num].SpellData[i] != null && this.Spells[num].SpellData[i].DisplayName.StringID == spell.DisplayName.StringID)
 					{
 						return true;
 					}
@@ -226,43 +244,85 @@ public class Grimoire : MonoBehaviour
 		int num = Mathf.Min(maxSpellLevel, 8);
 		for (int i = 0; i < num; i++)
 		{
-			for (int j = 0; j < 4; j++)
+			for (int j = 0; j < MaxSpellsPerLevel + (int)IEModOptions.ExtraWizardSpells; j++)
 			{
-				GenericSpell genericSpell = Spells[i].SpellData[j];
-				if (!(genericSpell != null))
+				GenericSpell spellData = this.Spells[i].SpellData[j];
+				if (spellData != null)
 				{
-					continue;
-				}
-				bool flag = false;
-				for (int k = 0; k < newSpells.Count; k++)
-				{
-					if (GenericAbility.NameComparer.Instance.Equals(newSpells[k], genericSpell))
+					bool flag = false;
+					IEnumerator<GenericAbility> enumerator = casterStats.ActiveAbilities.GetEnumerator();
+					try
 					{
-						flag = true;
-						break;
+						while (enumerator.MoveNext())
+						{
+							GenericAbility current = enumerator.Current;
+							if (!(current is GenericSpell) || spellData.DisplayName.StringID != current.DisplayName.StringID)
+							{
+								continue;
+							}
+							flag = true;
+							break;
+						}
 					}
-				}
-				if (flag)
-				{
-					continue;
-				}
-				bool flag2 = false;
-				foreach (GenericAbility activeAbility in casterStats.ActiveAbilities)
-				{
-					if (activeAbility is GenericSpell && genericSpell.DisplayName.StringID == activeAbility.DisplayName.StringID)
+					finally
 					{
-						flag2 = true;
-						break;
+						if (enumerator == null)
+						{
+						}
+						enumerator.Dispose();
 					}
-				}
-				if (!flag2)
-				{
-					newSpells.Add(genericSpell);
+					if (!flag && !newSpells.Contains(spellData))
+					{
+						newSpells.Add(spellData);
+					}
 				}
 			}
 		}
+		//if (caster == null)
+		//{
+		//	return null;
+		//}
+		//CharacterStats component = caster.GetComponent<CharacterStats>();
+		//if (component == null)
+		//{
+		//	return null;
+		//}
+		//List<GenericSpell> list = new List<GenericSpell>();
+		//int num = MaxSpellLevel;
+		//if (max_spell_level < num)
+		//{
+		//	num = max_spell_level;
+		//}
+		//for (int i = 0; i < num; i++)
+		//{
+		//	for (int j = 0; j < MaxSpellsPerLevel + (int)IEModOptions.ExtraWizardSpells; j++)
+		//	{
+		//		if (this.Spells[i].SpellData[j] != null)
+		//		{
+		//			bool flag = false;
+		//			foreach (GenericAbility current in component.ActiveAbilities)
+		//			{
+		//				if (current is GenericSpell && this.Spells[i].SpellData[j].DisplayName.StringID == current.DisplayName.StringID)
+		//				{
+		//					flag = true;
+		//					break;
+		//				}
+		//			}
+		//			if (!flag)
+		//			{
+		//				list.Add(this.Spells[i].SpellData[j]);
+		//			}
+		//		}
+		//	}
+		//}
+		//GenericSpell result = null;
+		//if (list.Count > 0)
+		//{
+		//	int index = UnityEngine.Random.Range(0, list.Count);
+		//	result = list[index];
+		//}
+		//return result;
 	}
-
 	public static Grimoire Find(GameObject character)
 	{
 		Equipment component = character.GetComponent<Equipment>();

@@ -15,47 +15,68 @@ public static class CommandLineRun
 
 	public static void RunCommand(string command)
 	{
-		if (string.IsNullOrEmpty(command) || command.ToLower() == "runcommand")
+		object[] objArray;
+		if (string.IsNullOrEmpty(command))
 		{
 			return;
 		}
-		IList<string> list = StringUtility.CommandLineStyleSplit(command);
+		if (command.ToLower() == "runcommand")
+		{
+			return;
+		}
+		IList<string> strs = StringUtility.CommandLineStyleSplit(command);
 		bool flag = false;
-		bool flag2 = false;
-		string error = "";
-		foreach (MethodInfo allMethod in GetAllMethods())
+		bool flag1 = false;
+		string empty = string.Empty;
+		IEnumerator<MethodInfo> enumerator = CommandLineRun.GetAllMethods().GetEnumerator();
+		try
 		{
-			if (string.Compare(allMethod.Name, list[0], ignoreCase: true) != 0)
+			while (enumerator.MoveNext())
 			{
-				continue;
+				MethodInfo current = enumerator.Current;
+				if (string.Compare(current.Name, strs[0], true) != 0)
+				{
+					continue;
+				}
+				/*
+				if (!CommandLineRun.MethodIsAvailable(current))
+				{
+					flag = true;
+				}
+				*/
+				else if (!CommandLineRun.FillMethodParams(current, strs, out objArray, out empty))
+				{
+					flag1 = true;
+				}
+				else
+				{
+					current.Invoke(null, objArray);
+					return;
+				}
 			}
-			if (!MethodIsAvailable(allMethod))
-			{
-				flag = true;
-				continue;
-			}
-			if (FillMethodParams(allMethod, list, out var param, out error))
-			{
-				allMethod.Invoke(null, param);
-				return;
-			}
-			flag2 = true;
 		}
-		if (flag2)
+		finally
 		{
-			Console.AddMessage("Command or script '" + list[0] + "' parameter error: " + error, Color.yellow);
+			if (enumerator == null)
+			{
+			}
+			enumerator.Dispose();
 		}
-		else if (flag)
+		if (flag1)
 		{
-			Console.AddMessage("The command or script '" + list[0] + "' is not available at this time.", Color.yellow);
+			Console.AddMessage(string.Concat("Command or script '", strs[0], "' parameter error: ", empty), Color.yellow);
+		}
+		else if (!flag)
+		{
+			Console.AddMessage(string.Concat("No command or script named '", strs[0], "' exists."), Color.yellow);
 		}
 		else
 		{
-			Console.AddMessage("No command or script named '" + list[0] + "' exists.", Color.yellow);
+			Console.AddMessage(string.Concat("The command or script '", strs[0], "' is not available at this time."), Color.yellow);
 		}
 	}
 
-	public static bool FillMethodParams(MethodInfo methodInfo, IList<string> stringparams, out object[] param, out string error)
+public static bool FillMethodParams(MethodInfo methodInfo, IList<string> stringparams, out object[] param, out string error)
 	{
 		ParameterInfo[] parameters = methodInfo.GetParameters();
 		if (parameters == null)
@@ -326,18 +347,6 @@ public static class CommandLineRun
 
 	public static bool MethodIsAvailable(MethodInfo method)
 	{
-		if (!GameState.Instance.CheatsEnabled)
-		{
-			MethodInfo[] array = s_CommandLineMethods;
-			foreach (MethodInfo methodInfo in array)
-			{
-				if (methodInfo == method && methodInfo.IsPublic && methodInfo.GetCustomAttributes(typeof(CheatAttribute), inherit: true).Length == 0)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
 		return true;
 	}
 

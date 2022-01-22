@@ -30,7 +30,10 @@ public class UIGrimoireInSpellRow : MonoBehaviour
 		}
 		m_Spells = new List<UIGrimoireSpell>();
 		m_Spells.Add(RootSpell);
-		for (int i = 1; i < 4; i++)
+		int bonusSpellSlots = (int)IEModOptions.ExtraWizardSpells;
+		Grid.maxPerLine = 4 + bonusSpellSlots;
+
+		for (int i = 1; i < 4 + bonusSpellSlots; i++)
 		{
 			m_Spells.Add(NGUITools.AddChild(RootSpell.transform.parent.gameObject, RootSpell.gameObject).GetComponent<UIGrimoireSpell>());
 		}
@@ -144,7 +147,7 @@ public class UIGrimoireInSpellRow : MonoBehaviour
 					}
 					m_Spells[i].SetSpell(genericSpell);
 					m_Spells[i].SetVisibility(val: true);
-					m_Spells[i].SetSelected(i < 4 && spellLevel == UIGrimoireManager.Instance.LevelButtons.CurrentLevel);
+					m_Spells[i].SetSelected(i < (4 + (int)IEModOptions.ExtraWizardSpells) && spellLevel == UIGrimoireManager.Instance.LevelButtons.CurrentLevel);
 					m_Spells[i].SetDisabled(GameState.InCombat || !UIGrimoireManager.Instance.CanEditGrimoire);
 					i++;
 				}

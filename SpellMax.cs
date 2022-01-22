@@ -29,28 +29,42 @@ public class SpellMax : MonoBehaviour
 
 	public int GetSpellCastMax(GameObject caster, int spellLevel)
 	{
-		int num = int.MaxValue;
+		int num = 2147483647;
+		bool calcBonusSpells = IEModOptions.BonusSpellsPerDay;
+
 		if (caster != null && spellLevel >= 1)
 		{
 			CharacterStats component = caster.GetComponent<CharacterStats>();
 			if (component != null)
 			{
-				num = SpellCastMaxLookup(component.CharacterClass, component.ScaledLevel, spellLevel);
-				switch (num)
+				num = this.SpellCastMaxLookup(component.CharacterClass, component.ScaledLevel, spellLevel);
+				if (num == 2147483647)
 				{
-				case int.MaxValue:
-					if (CharacterStats.IsPlayableClass(component.CharacterClass) && caster.GetComponent<PartyMemberAI>() != null)
+					if (CharacterStats.IsPlayableClass(component.CharacterClass))
 					{
-						num = 0;
+						PartyMemberAI component2 = caster.GetComponent<PartyMemberAI>();
+						if (component2 != null)
+						{
+							num = 0;
+						}
 					}
-					break;
-				case -1:
-					num = int.MaxValue;
-					break;
 				}
-				if (num > 0 && num < int.MaxValue)
+				else if (num == -1)
 				{
-					num += component.SpellCastBonus[spellLevel - 1];
+					num = 2147483647;
+				}
+				if (num > 0 && num < 2147483647)
+				{
+					int bonusSpells = 0;
+
+					if (calcBonusSpells)
+					{
+						for (int c = 14 + spellLevel; c <= component.Intellect; c += 4)
+						{
+							++bonusSpells;
+						}
+					}
+					num += component.SpellCastBonus[spellLevel - 1] + bonusSpells;
 				}
 			}
 		}
