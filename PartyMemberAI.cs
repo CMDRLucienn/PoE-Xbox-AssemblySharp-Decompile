@@ -1259,8 +1259,41 @@ public class PartyMemberAI : AIController
 				}
 				if (m_mover != null && !GameState.InCombat)
 				{
-					float newValue = (Stealth.IsInStealthMode(base.gameObject) ? 2f : 4f);
-					m_mover.UseCustomSpeed(newValue);
+					bool fastSneakActive = false;
+					if (IEModOptions.FastSneak != IEModOptions.FastSneakOptions.Normal)
+					{
+						bool canSeeEnemy = false;
+
+						if (IEModOptions.FastSneak == IEModOptions.FastSneakOptions.FastScoutingSingleLOS)
+						{
+							canSeeEnemy = this.m_enemySpotted;
+						}
+						else if (IEModOptions.FastSneak == IEModOptions.FastSneakOptions.FastScoutingAllLOS)
+						{
+							// if the fastSneak mod is active, then check if any enemies are spotted
+							// if so...we walk
+							for (int i = 0; i < PartyMemberAI.PartyMembers.Length; ++i)
+							{
+								var p = PartyMemberAI.PartyMembers[i];
+								if (p != null && p.m_enemySpotted)
+								{
+									canSeeEnemy = true;
+									break;
+								}
+							}
+						}
+						else
+						{
+							//Should never get here, but make default behavior to not override stealth
+							canSeeEnemy = true;
+						}
+
+						if (!canSeeEnemy)
+							fastSneakActive = true;
+					}
+
+					bool flag = ((Stealth.IsInStealthMode(base.gameObject) && !fastSneakActive));
+					this.m_mover.UseCustomSpeed((!flag ? 4f : 2f));
 				}
 			}
 		}

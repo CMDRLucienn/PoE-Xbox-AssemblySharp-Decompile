@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Assembly-CSharp", "Assembly
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IEMod.pw", "..\IEMod.pw\IEMod\IEMod.pw.csproj", "{540E5EFB-4E95-404D-B511-31CC56A9A492}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastSneak.pw", "..\IEMod.pw\modules\FastSneak.pw\FastSneak.pw.csproj", "{1FAB0C91-9AA4-458A-8485-EE1D0140672E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,14 @@ Global
 		{540E5EFB-4E95-404D-B511-31CC56A9A492}.Publish|Any CPU.Build.0 = Publish|Any CPU
 		{540E5EFB-4E95-404D-B511-31CC56A9A492}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{540E5EFB-4E95-404D-B511-31CC56A9A492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.PrepareEnvironment|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.PrepareEnvironment|Any CPU.Build.0 = Debug|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.Publish|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.Publish|Any CPU.Build.0 = Debug|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FAB0C91-9AA4-458A-8485-EE1D0140672E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -166,6 +166,8 @@ public class GenericAbility : MonoBehaviour, ITooltipContent
 
 	public bool CombatOnly;
 
+	private bool? originalCombatOnly;
+
 	public bool NonCombatOnly;
 
 	[Tooltip("Hides this ability and its status effects from the user completely. Use for backend abilities (e.g. ChanterTrait)")]
@@ -1468,7 +1470,7 @@ public class GenericAbility : MonoBehaviour, ITooltipContent
 		}
 	}
 
-	protected virtual void Update()
+	protected virtual void orig_Update()
 	{
 		if (CooldownType == CooldownMode.PerEncounter && !GameState.InCombat && m_perEncounterResetTimer > 0f)
 		{
@@ -1682,6 +1684,16 @@ public class GenericAbility : MonoBehaviour, ITooltipContent
 			}
 			EffectUntriggeredThisFrame = false;
 		}
+	}
+
+	protected virtual void Update()
+    {
+		if (originalCombatOnly == null)
+		{
+			originalCombatOnly = CombatOnly;
+		}
+		CombatOnly = !IEModOptions.CombatOnlyMod && originalCombatOnly.Value;
+		orig_Update();
 	}
 
 	protected void LaunchAttack(GameObject attackObj, bool useFullAttack, GenericAbility weaponAbility, StatusEffect[] effectsOnLaunch, AttackBase weaponAttack)

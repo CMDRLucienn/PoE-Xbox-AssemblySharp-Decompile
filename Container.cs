@@ -108,15 +108,20 @@ public class Container : OCL
 	{
 		get
 		{
-			if (IsEmptyDeadBody())
+			//!+ ADDED CODE
+			if (IEModOptions.UnlockCombatInv)
 			{
-				return false;
+				if (GameState.InCombat
+					&& (this.gameObject.name.Contains("DefaultDropItem") || this.gameObject.GetComponent<CharacterStats>() != null))
+				// this is a check for ground loot or body loot
+				{
+					return false;
+				}
+				return !this.IsEmptyDeadBody() && base.IsUsable;
 			}
-			if (!GameState.InCombat)
-			{
-				return base.IsUsable;
-			}
-			return false;
+			//!+ END ADD
+			return !this.IsEmptyDeadBody() && !GameState.InCombat && base.IsUsable;
+
 		}
 	}
 
